@@ -21,7 +21,7 @@ limitations under the License.
 //
 
 //a Imports
-use crate::{Mat4, Transformation, BonePoseSet, Instantiable};
+use crate::{Mat4, Transformation, SkeletonPose, Instantiable};
 
 //a Instance
 //tp Instance
@@ -36,7 +36,7 @@ pub struct Instance<'a> {
     /// Matrix for the transformation (must be updated after updating Transformation),
     pub trans_mat : Mat4,
     /// The sets of BonePose corresponding to the BoneSet array in the Instantiable
-    pub bone_poses   : Vec<BonePoseSet<'a>>,
+    pub bone_poses   : Vec<SkeletonPose<'a>>,
     /// Transformation matrices for the bones
     pub bone_matrices   : Vec<Mat4>,
 }
@@ -45,7 +45,7 @@ impl <'a> Instance<'a> {
     //fp new
     /// Create a new [Instance] from an [Instantiable]
     ///
-    /// This contains an array of [BonePoseSet]s to allow elements of
+    /// This contains an array of [SkeletonPose]s to allow elements of
     /// the [Instantiable] to be posed, and respective matrices for
     /// drawing the meshes within the [Instantiable]
     ///

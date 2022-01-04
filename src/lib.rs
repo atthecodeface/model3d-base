@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 @file    lib.rs
-@brief   Graphical model library
+@brief   3D model library
  */
 
 //a Documentation
@@ -21,14 +21,14 @@ limitations under the License.
 #![warn(missing_doc_code_examples)]
 
 /*!
-# OpenGL Model library
+# 3D Model library
 
 This library provides structures and functions to support simple and
-complex 3D graphical objects using, for example, OpenGL, in a
+complex 3D objects in a
 reasonably performant system. It use cases include 3D modeling tools,
 games, and 3D user interfaces.
 
-The graphical object model is derived from the Khronos glTF 3D
+The object model is derived from the Khronos glTF 3D
 model/scene description (<https://github.com/KhronosGroup/glTF>),
 without explicit support for animation or cameras.
 
@@ -122,6 +122,11 @@ NOTE THAT THE LIFETIME STUFF ONLY WORKS IF WE ADD A 'PASS ON GL_BUFFER' TO THE B
 
 A Shader is created using standard OpenGL calls. It must have the ShaderClass trait.
 
+An instantiable model consists of abstract mesh data and poses of the
+elements within its skeleton, if required.
+
+Multiple instances of an instantiable model can be created, each with its own set of poses.
+
 The Hierarchy module provides for a hierarchy of owned elements which
 are stored in an array inside the Hierachy structure; the
 rerlationship between nodes in the hierarchy are handled by indices
@@ -130,29 +135,52 @@ immutably interrogated - although the immutability refers to the
 *hierarchy* and the *node array*, not the contents of the nodes - the
 node content may be updated at will.
 
-
-
 !*/
+
+//a Basic types
+//tp Vec3
+/// 3-dimensional vector
+pub type Vec3 = [f32; 3];
+
+//tp Vec4
+/// 3-dimensional vector with extra coord (1 for position, 0 for direction)
+pub type Vec4 = [f32; 4];
+
+//tp Mat3
+/// 3-by-3 matrix for transformation of Vec3
+pub type Mat3 = [f32; 9];
+
+//tp Mat4
+/// 4-by-4 matrix for transformation of Vec4
+pub type Mat4 = [f32; 16];
+
+//tp Quat - Quaternion
+/// Quaternion
+pub type Quat = [f32; 4];
 
 //a Imports and exports
 pub mod hierarchy;
 
-mod types;
-pub use types::{Mat3, Mat4, Quat, Vao, Vec3, Vec4};
 mod transformation;
 pub use transformation::Transformation;
 
 mod bone;
-mod bone_set;
 mod bone_pose;
-mod bone_pose_set;
 pub use bone::Bone;
-pub use bone_set::BoneSet;
 pub use bone_pose::BonePose;
-pub use bone_pose_set::BonePoseSet;
+
+mod skeleton;
+mod skeleton_pose;
+pub use skeleton::Skeleton;
+pub use skeleton_pose::SkeletonPose;
 
 mod byte_buffer;
 pub use byte_buffer::ByteBuffer;
+
+mod buffer_data;
+pub use buffer_data::{BufferClientID, BufferData};
+mod buffer_view;
+pub use buffer_view::BufferView;
 
 mod traits;
 pub use traits::{Texture};
@@ -163,16 +191,3 @@ mod instantiable;
 mod instance;
 pub use instantiable::Instantiable;
 pub use instance::Instance;
-
-//mod drawable;
-mod buffer_data;
-pub use buffer_data::{BufferClientID, BufferData};
-mod buffer_view;
-pub use buffer_view::BufferView;
-
-//pub mod primitive;
-//pub mod mesh;
-//pub mod object;
-
-//pub mod shader;
-//pub use shader::{ShaderClass};

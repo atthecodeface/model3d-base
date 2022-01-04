@@ -1,39 +1,39 @@
-use gl_model::{Transformation, Bone, BoneSet};
+use model3d::{Transformation, Skeleton};
 
-fn build_bone_set() -> BoneSet {
-    let mut bones = BoneSet::new();
-    let b0 = bones.add_bone( Transformation::new(), 0 );
-    let b1 = bones.add_bone( Transformation::new().set_translation([1.,0.,0.]), 0 );
-    let b2 = bones.add_bone( Transformation::new().set_translation([0.,1.,0.]), 0 );
-    let b3 = bones.add_bone( Transformation::new().set_translation([0.,0.,1.]), 0 );
-    let b21 = bones.add_bone( Transformation::new().set_translation([0.5,0.,0.]), 0 );
-    let b22 = bones.add_bone( Transformation::new().set_translation([0.0,0.,0.5]), 0 );
-    bones.relate(b0, b1);
-    bones.relate(b0, b2);
-    bones.relate(b0, b3);
-    bones.relate(b2, b21);
-    bones.relate(b2, b22);
-    bones.resolve();
-    bones.rewrite_indices();
-    bones
+fn build_bone_set() -> Skeleton {
+    let mut skeleton = Skeleton::new();
+    let b0 = skeleton.add_bone( Transformation::new(), 0 );
+    let b1 = skeleton.add_bone( Transformation::new().set_translation([1.,0.,0.]), 0 );
+    let b2 = skeleton.add_bone( Transformation::new().set_translation([0.,1.,0.]), 0 );
+    let b3 = skeleton.add_bone( Transformation::new().set_translation([0.,0.,1.]), 0 );
+    let b21 = skeleton.add_bone( Transformation::new().set_translation([0.5,0.,0.]), 0 );
+    let b22 = skeleton.add_bone( Transformation::new().set_translation([0.0,0.,0.5]), 0 );
+    skeleton.relate(b0, b1);
+    skeleton.relate(b0, b2);
+    skeleton.relate(b0, b3);
+    skeleton.relate(b2, b21);
+    skeleton.relate(b2, b22);
+    skeleton.resolve();
+    skeleton.rewrite_indices();
+    skeleton
 }
 
 #[test]
 fn test_0() {
-    let bones = build_bone_set();
-    println!("{}",bones);
-    assert_eq!(1, bones.iter_roots().count());
+    let skeleton = build_bone_set();
+    println!("{}",skeleton);
+    assert_eq!(1, skeleton.iter_roots().count());
     // assert!(false);
 }
 
 #[test]
 fn test_1() {
-    let mut bones = build_bone_set();
-    bones.derive_matrices();
-    println!("{}",bones);
-    assert_eq!(bones.bones.borrow_node(4).borrow_mtb(),
+    let mut skeleton = build_bone_set();
+    skeleton.derive_matrices();
+    println!("{}",skeleton);
+    assert_eq!(skeleton.skeleton.borrow_node(4).borrow_mtb(),
                &[1.,0.,0.,0., 0.,1.,0.,0., 0.,0.,1.,0., -0.5,-1.,0.,1.]);
-    assert_eq!(bones.bones.borrow_node(5).borrow_mtb(),
+    assert_eq!(skeleton.skeleton.borrow_node(5).borrow_mtb(),
                &[1.,0.,0.,0., 0.,1.,0.,0., 0.,0.,1.,0., 0.,-1.,-0.5,1.]);
 }
 

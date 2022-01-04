@@ -24,15 +24,15 @@ use crate::Bone;
 use crate::Mat4;
 use crate::Transformation;
 
-//a BoneSet
-//tp BoneSet
+//a Skeleton
+//tp Skeleton
 /// A set of related bones, with one or more roots
 ///
 /// This corresponds to a skeleton (or a number thereof), with each
 /// bone appearing once in each skeleton. The bones form a hierarchy.
-pub struct BoneSet {
+pub struct Skeleton {
     /// The bones that make up the set, with the hierarchical relationships
-    pub bones: hierarchy::Hierarchy<Bone>,
+    pub skeleton: hierarchy::Hierarchy<Bone>,
     /// The roots of the bones and hierarchical recipes for traversal
     pub roots: Vec<(usize, hierarchy::Recipe)>,
     /// An array of matrices long enough for the one per level of traversal
@@ -41,16 +41,16 @@ pub struct BoneSet {
     pub max_index: usize,
 }
 
-//ip BoneSet
-impl BoneSet {
+//ip Skeleton
+impl Skeleton {
     //fp new
     /// Create a new set of bones
     pub fn new() -> Self {
-        let bones = hierarchy::Hierarchy::new();
+        let skeleton = hierarchy::Hierarchy::new();
         let roots = Vec::new();
         let temp_mat4s = Vec::new();
         Self {
-            bones,
+            skeleton,
             roots,
             temp_mat4s,
             max_index: 0,
@@ -66,20 +66,20 @@ impl BoneSet {
     pub fn add_bone(&mut self, transformation: Transformation, matrix_index: usize) -> usize {
         self.roots.clear();
         let bone = Bone::new(transformation, matrix_index);
-        self.bones.add_node(bone)
+        self.skeleton.add_node(bone)
     }
 
     //mp relate
     /// Relate a parent bone to a child bone (by bone reference indices)
     pub fn relate(&mut self, parent: usize, child: usize) {
-        self.bones.relate(parent, child);
+        self.skeleton.relate(parent, child);
     }
 
     //mi find_max_matrix_index
     /// Find the maximum matrix index of all the bones (plus 1)
     fn find_max_matrix_index(&mut self) {
         let mut max_index = 0;
-        for b in self.bones.borrow_elements() {
+        for b in self.skeleton.borrow_elements() {
             if b.data.matrix_index >= max_index {
                 max_index = b.data.matrix_index + 1
             }
@@ -88,17 +88,17 @@ impl BoneSet {
     }
 
     //mp resolve
-    /// Resolve the [BoneSet] by finding the roots, generating
+    /// Resolve the [Skeleton] by finding the roots, generating
     /// traversal [hierarchy::Recipe]s for each root, allocating the
     /// required number of temporary [Mat4]s for the deepest of all
     /// the recipes, and finding the number of bone matrices required
     /// to be exported
     pub fn resolve(&mut self) {
         if self.roots.len() == 0 {
-            self.bones.find_roots();
-            for r in self.bones.borrow_roots() {
+            self.skeleton.find_roots();
+            for r in self.skeleton.borrow_roots() {
                 self.roots
-                    .push((*r, hierarchy::Recipe::of_ops(self.bones.enum_from(*r))));
+                    .push((*r, hierarchy::Recipe::of_ops(self.skeleton.enum_from(*r))));
             }
             let mut max_depth = 0;
             for (_, recipe) in &self.roots {
@@ -119,13 +119,13 @@ impl BoneSet {
     //mp rewrite_indices
     /// Rewrite the bone matrix indices from 0 if required
     ///
-    /// Each bone in the [BoneSet] is allocated the matrix index as it
-    /// is reached through traversal from the roots of the [BoneSet].
+    /// Each bone in the [Skeleton] is allocated the matrix index as it
+    /// is reached through traversal from the roots of the [Skeleton].
     pub fn rewrite_indices(&mut self) {
         self.resolve();
-        if self.max_index < self.bones.len() {
+        if self.max_index < self.skeleton.len() {
             let mut bone_count = 0;
-            let (_, bones) = self.bones.borrow_mut();
+            let (_, bones) = self.skeleton.borrow_mut();
             for (_, recipe) in &self.roots {
                 for op in recipe.borrow_ops() {
                     match op {
@@ -143,7 +143,7 @@ impl BoneSet {
 
     //mp derive_matrices
     /// Derive the matrices (as specified by [Bone]) for every bone in
-    /// the [BoneSet] after the bones have been resolved.
+    /// the [Skeleton] after the bones have been resolved.
     ///
     ///
     pub fn derive_matrices(&mut self) {
@@ -151,7 +151,7 @@ impl BoneSet {
             self.roots.len() != 0,
             "Resolve MUST have been invoked prior to derive_matrices"
         );
-        let (_, bones) = self.bones.borrow_mut();
+        let (_, bones) = self.skeleton.borrow_mut();
         let mut mat_depth = 0;
         for (_, recipe) in &self.roots {
             for op in recipe.borrow_ops() {
@@ -177,7 +177,7 @@ impl BoneSet {
     }
 
     //fp iter_roots
-    /// Iterate through the root bone indices in the [BoneSet]
+    /// Iterate through the root bone indices in the [Skeleton]
     pub fn iter_roots<'z>(&'z self) -> impl Iterator<Item = usize> + '_ {
         self.roots.iter().map(|(n, _)| *n)
     }
@@ -185,19 +185,19 @@ impl BoneSet {
     //zz All done
 }
 
-//ip IndentedDisplay for BoneSet
+//ip IndentedDisplay for Skeleton
 impl<'a, Opt: IndentedOptions<'a>> IndentedDisplay<'a, Opt>
-    for BoneSet
+    for Skeleton
 {
     //mp fmt
     /// Display for humans with indent
     fn indent(&self, f: &mut Indenter<'a, Opt>) -> std::fmt::Result {
-        self.bones.indent(f)
+        self.skeleton.indent(f)
     }
 }
 
-//ip Display for BoneSet
-impl std::fmt::Display for BoneSet
+//ip Display for Skeleton
+impl std::fmt::Display for Skeleton
 {
     //mp fmt
     /// Display for humans with indent

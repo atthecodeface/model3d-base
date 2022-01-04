@@ -23,18 +23,18 @@ limitations under the License.
 //a Imports
 use geo_nd::{matrix};
 
-use crate::{Mat4, Transformation, BoneSet, Instance};
+use crate::{Mat4, Transformation, Skeleton, Instance};
 
 //a Instantiable
-//ti BoneSetAndOffset
-struct BoneSetAndOffset {
-    set:BoneSet,
+//ti SkeletonAndOffset
+struct SkeletonAndOffset {
+    set:Skeleton,
     bone_matrix_index:usize
 }
 
 //ti MeshIndexData
 pub struct MeshIndexData {
-    /// Index to the mesh matrices of the first mesh for the BoneSet
+    /// Index to the mesh matrices of the first mesh for the Skeleton
     pub mesh_matrix_index: usize,
     /// Pair of usize
     pub bone_matrices    : (usize, usize)
@@ -52,12 +52,12 @@ pub struct MeshIndexData {
 ///
 /// The Instantiable data must be kept available to its related Instance.
 ///
-/// The content of the Instantiable includes an array of BoneSets and
+/// The content of the Instantiable includes an array of Skeletons and
 /// mesh transformation matrices, with appropriate index values. These
 /// index values are into the related set of Mesh data.
 pub struct Instantiable {
     /// The sets of bones, each of which will have a pose, and a corresponding first bone matrix
-    bones   : Vec<BoneSetAndOffset>,
+    bones   : Vec<SkeletonAndOffset>,
     /// Transformation matrices for the meshes
     pub mesh_matrices   : Vec<Mat4>,
     /// An array indexed by the associated mesh data index value, and for each such index the content
@@ -120,7 +120,7 @@ impl Instantiable {
 
     //mp add_bone_set
     /// Add a bone set; clones it, and generates a number of bone matrices and updates appropriately, returning the range of bone matrices that the set corresponds to
-    pub fn add_bone_set(&mut self, _bone_set:&BoneSet) -> (usize, usize) {
+    pub fn add_bone_set(&mut self, _bone_set:&Skeleton) -> (usize, usize) {
         (0,0)
     }
 
