@@ -32,7 +32,7 @@ where T:TextureClient, V:VerticesClient, B:BufferClient
     /// Skeleton
     pub skeleton : Option<Skeleton>,
     /// All the vertices used
-    pub vertices : Vec<Vertices<'a, V, B>>,
+    pub vertices : Vec<&'a Vertices<'a, V, B>>,
     /// All the materials used
     pub materials : Vec<&'a dyn Material<T>>,
     /// The meshes etc that make up the object
@@ -57,7 +57,31 @@ impl <'a, T, V, B> Object<'a, T, V, B>
         let meshes = Vec::new();
         Self { skeleton, vertices, materials, components, meshes }
     }
-    
+
+    //mp add_vertices
+    pub fn add_vertices(&mut self, vertices:&'a Vertices<'a, V, B>) -> usize {
+        let n = self.vertices.len();
+        self.vertices.push(vertices);
+        n
+    }
+
+    //mp borrow_vertices
+    pub fn borrow_vertices(&self, n:usize) -> &Vertices<'a, V, B> {
+        self.vertices[n]
+    }
+
+    //fp add_material
+    pub fn add_material(&mut self, material:&'a dyn Material<T>) -> usize {
+        let n = self.materials.len();
+        self.materials.push(material);
+        n
+    }
+
+    //mp borrow_material
+    pub fn borrow_material(&self, n:usize) -> &dyn Material<T> {
+        self.materials[n]
+    }
+
     //fp add_component
     /// Add a component to the hierarchy
     pub fn add_component(&mut self,

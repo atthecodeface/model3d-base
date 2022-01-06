@@ -89,5 +89,10 @@ impl <'vertices, V:VerticesClient, B:BufferClient> Vertices<'vertices, V, B> {
         None
     }
 
+    //mp borrow_client
+    pub fn borrow_client(&self) -> &Option<V> {
+        &self.client
+    }
+
     //zz All done
 }

@@ -294,6 +294,7 @@ pub use mesh::Mesh;
 mod component;
 pub use component::Component;
 mod object;
+pub use object::Object;
 
 /*
 mod instantiable;
@@ -303,4 +304,6 @@ pub use instance::Instance;
  */
 
 pub mod example_objects;
+pub use example_objects::ExampleVertices;
+
 
