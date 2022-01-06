@@ -12,15 +12,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-@file    bezier.rs
-@brief   Part of geometry library
+@file    byte_buffer.rs
+@brief   Part of 3D model library
  */
-
-//a Notes
-//
-//
-
-//a Imports
 
 //a ByteBuffer
 //tp ByteBuffer
@@ -50,7 +44,7 @@ impl <T, const N:usize> ByteBuffer for [T; N] {
     }
 
     //fp borrow_bytes
-    fn borrow_bytes<'a>(&'a self) -> &'a [u8] {
+    fn borrow_bytes(&self) -> &[u8] {
 	unsafe { std::mem::transmute::<&[T], &[u8]>(self) }
     }
 
@@ -66,8 +60,8 @@ impl <T> ByteBuffer for Vec<T> {
     }
 
     //fp borrow_bytes
-    fn borrow_bytes<'a>(&'a self) -> &'a [u8] {
-	    unsafe { std::mem::transmute::<&[T], &[u8]>(&self) }
+    fn borrow_bytes(&self) -> &[u8] {
+	    unsafe { std::mem::transmute::<&[T], &[u8]>(self) }
     }
 
     //zz All done

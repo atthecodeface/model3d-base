@@ -11,9 +11,12 @@ use crate::{Mat4, Quat, Vec3};
 /// The rotation here is encoded by a [Quat]ernion
 #[derive(Clone, Copy, Debug)]
 pub struct Transformation {
+    /// Translation to apply after rotation
     translation: Vec3,
-    scale: Vec3,
+    /// Rotation to apply after scaling
     rotation: Quat,
+    /// Scaling to apply first
+    scale: Vec3,
 }
 
 //ip Transformation
@@ -52,16 +55,18 @@ impl Transformation {
         self
     }
 
-    //cp copy
+    //cp copy_from
     /// Copy the transformation from another
-    pub fn copy(&mut self, other: &Self) {
+    pub fn copy_from(&mut self, other: &Self) {
         self.translation = other.translation.clone();
-        self.scale = other.scale.clone();
-        self.rotation = other.rotation.clone();
+        self.scale       = other.scale.clone();
+        self.rotation    = other.rotation.clone();
     }
 
     //mp combine
     /// Combine two transformations into this
+    ///
+    /// To operate correctly the scales must be 
     pub fn combine(&mut self, base: &Self, other: &Self) {
         self.rotation = quat::multiply(&base.rotation, &other.rotation);
         self.translation = base.translation.clone();
@@ -72,14 +77,14 @@ impl Transformation {
     }
 
     //mp translate
-    /// Apply a translation to the transformation
+    /// Pre-apply a translation to the transformation
     pub fn translate(&mut self, translation: &Vec3, scale: f32) {
         self.translation = vector::add(self.translation, translation, scale);
     }
 
-    //mp rotate
+    //mp rotate_axis_angle
     /// Rotate the transformation by an angle about an axis
-    pub fn rotate(&mut self, axis: &Vec3, angle: f32) {
+    pub fn rotate_axis_angle(&mut self, axis: &Vec3, angle: f32) {
         let q = quat::of_axis_angle(axis, angle);
         self.rotation = quat::multiply(&q, &self.rotation);
         // Glm.quat.multiply(self.translation, q, self.translation)

@@ -25,18 +25,9 @@ This provides for abstract Materials which can be used by any 3D model
 !*/
 
 //a Imports
-use crate::{Texture};
+use crate::{TextureClient, Material};
 
-//a Material
-#[derive(Debug)]
-pub enum MaterialAspect {
-    Color,
-    Normal,
-    MetallicRoughness,
-    Occlusion,
-    Emission,
-}
-
+//a BaseData
 //tp BaseData
 /// The basic data for a material; the most simple material is
 /// actually just RGB, but to keep the system simple the [BaseData]
@@ -69,37 +60,35 @@ impl Default for BaseData {
 
 //ip BaseData
 impl BaseData {
+    //cp rgba
+    /// Create a new material with a given RGBA
     pub fn rgba(rgba:(f32, f32, f32, f32)) -> Self {
         Self { rgba, metallic:0., roughness:1. }
     }
+    
+    //cp set_metallic
+    /// Set the metallic nature of a material
     pub fn set_metallic(mut self, metallic:f32) -> Self {
         self.metallic = metallic;
         self
     }
+    
+    //cp set_roughness
+    /// Set the roughness of a material
     pub fn set_roughness(mut self, roughness:f32) -> Self {
         self.roughness = roughness;
         self
     }
+    
+    //cp set_mr
+    /// Set the metallic and roughness of a material
     pub fn set_mr(mut self, metallic:f32, roughness:f32) -> Self {
         self.metallic = metallic;
         self.roughness = roughness;
         self
     }
-}
 
-//tt Material
-/// A [Material] provides means to access the data for a material, be
-/// it simple of full PBR. A fragment shader may require some aspects
-/// of a material to be provided to it for rendering, and this API
-/// allows that information to be gathered from any kind of material
-pub trait Material<T:Texture> {
-    /// Borrow the basic data of a material - color and base
-    /// metallic/roughness, for example
-    fn borrow_base_data(&self) -> &BaseData;
-    ///
-    fn borrow_texture(&self, _aspect:MaterialAspect) -> Option<&T> {
-        None
-    }
+    //zz All done
 }
 
 //a BaseMaterial
@@ -140,7 +129,7 @@ impl BaseMaterial {
 }
 
 //ip Material for BaseMaterial
-impl <T:Texture> Material<T> for BaseMaterial {
+impl <T:TextureClient> Material<T> for BaseMaterial {
     fn borrow_base_data(&self) -> &BaseData {
         &self.base_data
     }
@@ -150,14 +139,14 @@ impl <T:Texture> Material<T> for BaseMaterial {
 //tp TexturedMaterial
 /// A simple textured material with a color and optional normal map
 #[derive(Debug)]
-pub struct TexturedMaterial<T:Texture> {
+pub struct TexturedMaterial<T:TextureClient> {
     base_data : BaseData,
     base_texture     : Option<T>,
     normal_texture   : Option<T>,
 }
 
 //ip Material for TexturedMaterial
-impl <T:Texture> Material<T> for TexturedMaterial<T> {
+impl <T:TextureClient> Material<T> for TexturedMaterial<T> {
     fn borrow_base_data(&self) -> &BaseData {
         &self.base_data
     }
@@ -167,7 +156,7 @@ impl <T:Texture> Material<T> for TexturedMaterial<T> {
 //tp PbrMaterial
 /// A physically-based rendered material with full set of textures
 #[derive(Debug)]
-pub struct PbrMaterial<T:Texture> {
+pub struct PbrMaterial<T:TextureClient> {
     base_data : BaseData,
     base_texture     : Option<T>,
     normal_texture   : Option<T>,
@@ -176,7 +165,9 @@ pub struct PbrMaterial<T:Texture> {
     emission_texture : Option<T>,
 }
 
-impl <T:Texture> PbrMaterial<T> {
+//ip PbrMaterial
+impl <T:TextureClient> PbrMaterial<T> {
+    /// Create a new PBR material
     pub fn new() -> Self {
         Self {
             base_data : BaseData::default(),

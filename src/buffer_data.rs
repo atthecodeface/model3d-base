@@ -23,16 +23,7 @@ limitations under the License.
 //a Imports
 use std::cell::RefCell;
 
-use crate::{ByteBuffer};
-
-//a BufferClientID
-//tt BufferClientID
-pub trait BufferClientID : Sized +std::fmt::Display {
-    fn none() -> Self;
-    fn is_none(&self) -> bool;
-    fn create(&mut self, data:&BufferData<Self>, reason:usize);
-    fn destroy(&mut self, data:&BufferData<Self>);
-}
+use crate::{ByteBuffer, BufferClient};
 
 //a BufferData
 //tp BufferData
@@ -57,19 +48,20 @@ pub trait BufferClientID : Sized +std::fmt::Display {
 /// Of course the model may be instantiated many times in a single scene.
 ///
 /// OpenGL will have one copy of the data for all the primitives and models.
-pub struct BufferData<'a, T:BufferClientID> {
+#[derive(Debug)]
+pub struct BufferData<'a, T:BufferClient> {
     /// Data buffer itself
     data        : &'a [u8],
     /// Offset in to the data buffer for the first byte
-    byte_offset : u32,
+    pub byte_offset : u32,
     /// Length of data used in the buffer
-    byte_length : u32,
+    pub byte_length : u32,
     /// The client bound to data[byte_offset] .. + byte_length
     rc_client   : RefCell<T>,
 }
 
 //ip BufferData
-impl <'a,T:BufferClientID> BufferData<'a, T> {
+impl <'a,T:BufferClient> BufferData<'a, T> {
     //fp new
     /// Create a new `BufferData` given a buffer, offset and length; if the
     /// length is zero then the whole of the data buffer post offset
@@ -79,7 +71,7 @@ impl <'a,T:BufferClientID> BufferData<'a, T> {
     ///
     /// This function can be invoked prior to the OpenGL context being
     /// created; this performs no OpenGL calls
-    pub fn new<B:ByteBuffer>(data:&'a B, byte_offset:u32, byte_length:u32) -> Self {
+    pub fn new(data:&'a dyn ByteBuffer, byte_offset:u32, byte_length:u32) -> Self {
         let byte_length = {
             if byte_length == 0 { (data.byte_length() as u32)-byte_offset } else { byte_length }
         };
@@ -95,16 +87,24 @@ impl <'a,T:BufferClientID> BufferData<'a, T> {
     }
 
     //mp create_client
+    /// Create the client data (if not none) with a given reason
     pub fn create_client(&self, reason:usize) {
-        if self.rc_client.borrow().is_none() {
-            self.rc_client.borrow_mut().create(self, reason);
-        }
+        self.rc_client.borrow_mut().create(self, reason);
     }
 
     //mp destroy_client
-    pub fn destroy_client(&self) {
-        if !self.rc_client.borrow().is_none() {
-            self.rc_client.borrow_mut().destroy(self);
+    /// Destroy the client data (should set it to none)
+    ///
+    /// If reason is 0 then all client data should be destroyed (the data is being dropped)
+    pub fn destroy_client(&self, reason:usize) {
+        self.rc_client.borrow_mut().destroy(self, reason);
+    }
+
+    //mp as_ptr
+    /// Get a const u8 ptr to the data itself
+    pub fn as_ptr(&self) -> *const u8 {
+        unsafe {
+            self.data.as_ptr().add(self.byte_offset as usize)
         }
     }
 
@@ -112,18 +112,16 @@ impl <'a,T:BufferClientID> BufferData<'a, T> {
 }
 
 //ip Drop for BufferData
-impl <'a, T:BufferClientID> Drop for BufferData<'a, T> {
+impl <'a, T:BufferClient> Drop for BufferData<'a, T> {
     //fp drop
-    /// If an OpenGL buffer has been created for this then delete it
+    /// Destroy all client buffers if they have been created
     fn drop(&mut self) {
-        if !self.rc_client.borrow().is_none() {
-            self.rc_client.borrow_mut().destroy(self);
-        }
+        self.rc_client.borrow_mut().destroy(self, 0);
     }
 }
 
 //ip Display for BufferData
-impl <'a, T:BufferClientID> std::fmt::Display for BufferData<'a, T> {
+impl <'a, T:BufferClient> std::fmt::Display for BufferData<'a, T> {
     fn fmt(&self, f:&mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         let data_ptr = self.data.as_ptr();
         write!(f,"BufferData[{:?}+{}#{}]:GL({})", data_ptr, self.byte_offset, self.byte_length, self.rc_client.borrow())
@@ -131,5 +129,5 @@ impl <'a, T:BufferClientID> std::fmt::Display for BufferData<'a, T> {
 }
 
 //ip DefaultIndentedDisplay for BufferData
-impl <'a, T:BufferClientID> indent_display::DefaultIndentedDisplay for BufferData<'a, T> {}
+impl <'a, T:BufferClient> indent_display::DefaultIndentedDisplay for BufferData<'a, T> {}
 

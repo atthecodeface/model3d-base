@@ -17,7 +17,6 @@ limitations under the License.
  */
 
 //a Imports
-use geo_nd::matrix;
 use indent_display::{IndentedDisplay, IndentedOptions, Indenter};
 
 use crate::hierarchy;
@@ -109,7 +108,6 @@ impl<'a, 'b, Opt: IndentedOptions<'a>> IndentedDisplay<'a, Opt>
     //mp fmt
     /// Display for humans with indent
     fn indent(&self, f: &mut Indenter<'a, Opt>) -> std::fmt::Result {
-        use std::fmt::Write;
         for (_, recipe) in &self.skeleton.roots {
             let mut sub = f.sub();
             for op in recipe.borrow_ops() {
