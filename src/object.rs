@@ -17,7 +17,7 @@ limitations under the License.
  */
 
 //a Imports
-use crate::{TextureClient, VerticesClient, BufferClient};
+use crate::{Renderable, TextureClient, VerticesClient, BufferClient};
 use crate::{Transformation, Skeleton, Material, Component, Mesh, Vertices};
 use crate::hierarchy;
 use hierarchy::{Hierarchy};
@@ -26,26 +26,26 @@ use hierarchy::{Hierarchy};
 /// A hierarchy of ObjectNode's
 ///
 /// This can be flattened in to an Instantiable
-pub struct Object<'a, T, V, B>
-where T:TextureClient, V:VerticesClient, B:BufferClient
+pub struct Object<'a, R>
+where R:Renderable
 {
     /// Skeleton
     pub skeleton : Option<Skeleton>,
     /// All the vertices used
-    pub vertices : Vec<&'a Vertices<'a, V, B>>,
+    pub vertices : Vec<&'a Vertices<'a, R::Vertices, R::Buffer>>,
     /// All the materials used
-    pub materials : Vec<&'a dyn Material<T>>,
+    pub materials : Vec<&'a dyn Material<R>>,
     /// The meshes etc that make up the object
     pub components   : Hierarchy<Component>,
-    /// The roots of the bones and hierarchical recipes for traversal
+    // The roots of the bones and hierarchical recipes for traversal
     // pub roots   : Vec<(usize, Recipe)>,
-    /// Meshes - indices in to nodes.nodes array of the meshes in the order of instance
-    pub meshes : Vec<usize>
+    // Meshes - indices in to nodes.nodes array of the meshes in the order of instance
+    // pub meshes : Vec<usize>
 }
 
 //ip Object
-impl <'a, T, V, B> Object<'a, T, V, B>
-    where T:TextureClient, V:VerticesClient, B:BufferClient {
+impl <'a, R> Object<'a, R>
+    where R:Renderable {
     //fp new
     /// Create a new [Object] with no components
     pub fn new() -> Self {
@@ -54,31 +54,31 @@ impl <'a, T, V, B> Object<'a, T, V, B>
         let materials = Vec::new();
         let components = Hierarchy::new();
         // let roots = Vec::new();
-        let meshes = Vec::new();
-        Self { skeleton, vertices, materials, components, meshes }
+        // let meshes = Vec::new();
+        Self { skeleton, vertices, materials, components }
     }
 
     //mp add_vertices
-    pub fn add_vertices(&mut self, vertices:&'a Vertices<'a, V, B>) -> usize {
+    pub fn add_vertices(&mut self, vertices:&'a Vertices<'a, R::Vertices, R::Buffer>) -> usize {
         let n = self.vertices.len();
         self.vertices.push(vertices);
         n
     }
 
     //mp borrow_vertices
-    pub fn borrow_vertices(&self, n:usize) -> &Vertices<'a, V, B> {
+    pub fn borrow_vertices(&self, n:usize) -> &Vertices<'a, R::Vertices, R::Buffer> {
         self.vertices[n]
     }
 
     //fp add_material
-    pub fn add_material(&mut self, material:&'a dyn Material<T>) -> usize {
+    pub fn add_material(&mut self, material:&'a dyn Material<R>) -> usize {
         let n = self.materials.len();
         self.materials.push(material);
         n
     }
 
     //mp borrow_material
-    pub fn borrow_material(&self, n:usize) -> &dyn Material<T> {
+    pub fn borrow_material(&self, n:usize) -> &dyn Material<R> {
         self.materials[n]
     }
 

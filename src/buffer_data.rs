@@ -57,6 +57,11 @@ pub struct BufferData<'a, T:BufferClient> {
     /// Length of data used in the buffer
     pub byte_length : u32,
     /// The client bound to data[byte_offset] .. + byte_length
+    ///
+    /// This must be held as a [RefCell] as the [BufferData] is
+    /// created early in the process, prior to any `BufferView`s using
+    /// it - which then have shared references to the daata - but the
+    /// client is created afterwards
     rc_client   : RefCell<T>,
 }
 
@@ -92,12 +97,12 @@ impl <'a,T:BufferClient> BufferData<'a, T> {
         self.rc_client.borrow_mut().create(self, reason);
     }
 
-    //mp destroy_client
+    //mp drop_client
     /// Destroy the client data (should set it to none)
     ///
-    /// If reason is 0 then all client data should be destroyed (the data is being dropped)
-    pub fn destroy_client(&self, reason:usize) {
-        self.rc_client.borrow_mut().destroy(self, reason);
+    /// Zero is reserved for dropping due to this [BufferData] being dropped
+    pub fn drop_client(&self, reason:usize) {
+        self.rc_client.borrow_mut().drop(self, reason);
     }
 
     //mp as_ptr
@@ -114,9 +119,13 @@ impl <'a,T:BufferClient> BufferData<'a, T> {
 //ip Drop for BufferData
 impl <'a, T:BufferClient> Drop for BufferData<'a, T> {
     //fp drop
-    /// Destroy all client buffers if they have been created
+    /// Drop the client by issuing a drop with a reason of 0
+    ///
+    /// This allows a client to differentiate between it being dropped
+    /// and the [BufferData] being dropped causing any reference to be
+    /// dropped
     fn drop(&mut self) {
-        self.rc_client.borrow_mut().destroy(self, 0);
+        self.rc_client.borrow_mut().drop(self, 0);
     }
 }
 

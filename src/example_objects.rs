@@ -1,16 +1,16 @@
 use std::pin::Pin;
 use std::ops::Deref;
 
-use crate::{ByteBuffer, BufferClient, BufferElementType, VerticesClient, BufferData, BufferView, Vertices};
+use crate::{ByteBuffer, BufferClient, BufferElementType, VerticesClient, BufferData, BufferView, Vertices, Renderable};
 
-pub struct ExampleVertices<'a, V:VerticesClient, B:BufferClient> {
+pub struct ExampleVertices<'a, R:Renderable> {
     buffers : Vec<Pin<Box<dyn ByteBuffer>>>,
-    data : Vec<Pin<Box<BufferData<'a, B>>>>,
-    views : Vec<Pin<Box<BufferView<'a, B>>>>,
-    vertices : Vec<Vertices<'a, V, B>>,
+    data : Vec<Pin<Box<BufferData<'a, R::Buffer>>>>,
+    views : Vec<Pin<Box<BufferView<'a, R::Buffer>>>>,
+    vertices : Vec<Vertices<'a, R::Vertices, R::Buffer>>,
 }
 
-impl <'a, V:VerticesClient, B:BufferClient> ExampleVertices<'a, V, B> {
+impl <'a, R:Renderable> ExampleVertices<'a, R> {
 
     pub fn new() -> Pin<Box<Self>> {
         let buffers = Vec::new();
@@ -31,21 +31,21 @@ impl <'a, V:VerticesClient, B:BufferClient> ExampleVertices<'a, V, B> {
     }
     pub fn push_view(&mut self, data:usize, num:u32, et:BufferElementType, ofs:u32, length:u32) -> usize{
         let n = self.views.len();
-        let d = unsafe  {std::mem::transmute::<&BufferData<'_, B>, &'a BufferData<'a, B>>(&self.data[data]) };
+        let d = unsafe  {std::mem::transmute::<&BufferData<'_, R::Buffer>, &'a BufferData<'a, R::Buffer>>(&self.data[data]) };
         let view = Box::pin(BufferView::new(d, num, et, ofs, length));
         self.views.push(view);
         n
     }
     pub fn push_vertices(&mut self, indices:usize, vertices:usize) -> usize {
         let n = self.vertices.len();
-        let i = unsafe {std::mem::transmute::<&BufferView<'_, B>, &'a BufferView<'a, B>>(&self.views[indices]) };
-        let v = unsafe {std::mem::transmute::<&BufferView<'_, B>, &'a BufferView<'a, B>>(&self.views[vertices]) };
+        let i = unsafe {std::mem::transmute::<&BufferView<'_, R::Buffer>, &'a BufferView<'a, R::Buffer>>(&self.views[indices]) };
+        let v = unsafe {std::mem::transmute::<&BufferView<'_, R::Buffer>, &'a BufferView<'a, R::Buffer>>(&self.views[vertices]) };
         let vertices = Vertices::new(i, v);
         self.vertices.push(vertices);
         n
     }
 
-    pub fn borrow_vertices(&self, vertices:usize) -> &Vertices<V, B> {
+    pub fn borrow_vertices(&self, vertices:usize) -> &Vertices<R::Vertices, R::Buffer> {
         &self.vertices[vertices]
     }
 }

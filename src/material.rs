@@ -25,7 +25,7 @@ This provides for abstract Materials which can be used by any 3D model
 !*/
 
 //a Imports
-use crate::{TextureClient, Material};
+use crate::{Renderable, TextureClient, Material, MaterialAspect};
 
 //a BaseData
 //tp BaseData
@@ -129,7 +129,7 @@ impl BaseMaterial {
 }
 
 //ip Material for BaseMaterial
-impl <T:TextureClient> Material<T> for BaseMaterial {
+impl <R:Renderable> Material<R> for BaseMaterial {
     fn borrow_base_data(&self) -> &BaseData {
         &self.base_data
     }
@@ -139,34 +139,46 @@ impl <T:TextureClient> Material<T> for BaseMaterial {
 //tp TexturedMaterial
 /// A simple textured material with a color and optional normal map
 #[derive(Debug)]
-pub struct TexturedMaterial<T:TextureClient> {
+pub struct TexturedMaterial<R:Renderable> {
     base_data : BaseData,
-    base_texture     : Option<T>,
-    normal_texture   : Option<T>,
+    base_texture     : Option<R::Texture>,
+    normal_texture   : Option<R::Texture>,
 }
 
 //ip Material for TexturedMaterial
-impl <T:TextureClient> Material<T> for TexturedMaterial<T> {
+impl <R:Renderable> Material<R> for TexturedMaterial<R> {
     fn borrow_base_data(&self) -> &BaseData {
         &self.base_data
     }
+
+    fn borrow_texture(&self, aspect:MaterialAspect) -> Option<&R::Texture> {
+        use MaterialAspect::*;
+        match aspect {
+            Color  => self.base_texture.as_ref(),
+            Normal => self.normal_texture.as_ref(),
+            _ => None
+        }
+    }
+    // MetallicRoughness,
+    // Occlusion,
+    // Emission,
 }
 
 //a PbrMaterial
 //tp PbrMaterial
 /// A physically-based rendered material with full set of textures
 #[derive(Debug)]
-pub struct PbrMaterial<T:TextureClient> {
+pub struct PbrMaterial<R:Renderable> {
     base_data : BaseData,
-    base_texture     : Option<T>,
-    normal_texture   : Option<T>,
-    mr_texture       : Option<T>,
-    occlusion_texture: Option<T>,
-    emission_texture : Option<T>,
+    base_texture     : Option<R::Texture>,
+    normal_texture   : Option<R::Texture>,
+    mr_texture       : Option<R::Texture>,
+    occlusion_texture: Option<R::Texture>,
+    emission_texture : Option<R::Texture>,
 }
 
 //ip PbrMaterial
-impl <T:TextureClient> PbrMaterial<T> {
+impl <R:Renderable> PbrMaterial<R> {
     /// Create a new PBR material
     pub fn new() -> Self {
         Self {
@@ -176,6 +188,25 @@ impl <T:TextureClient> PbrMaterial<T> {
             mr_texture: None,
             occlusion_texture: None,
             emission_texture: None,
+        }
+    }
+}
+
+//ip Material for PbrMaterial
+impl <R:Renderable> Material<R> for PbrMaterial<R> {
+    fn borrow_base_data(&self) -> &BaseData {
+        &self.base_data
+    }
+
+    fn borrow_texture(&self, aspect:MaterialAspect) -> Option<&R::Texture> {
+        use MaterialAspect::*;
+        match aspect {
+            Color  => self.base_texture.as_ref(),
+            Normal => self.normal_texture.as_ref(),
+            MetallicRoughness => self.mr_texture.as_ref(),
+            Occlusion => self.occlusion_texture.as_ref(),
+            Emission => self.emission_texture.as_ref(),
+            _ => None
         }
     }
 }
@@ -209,3 +240,4 @@ impl <T:TextureClient> PbrMaterial<T> {
     pass
 
  */
+

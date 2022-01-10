@@ -86,9 +86,27 @@ A [Skeleton] is similar to a `skin` in GLTF.
 
 ## Materials
 
+[Material] is a trait that must be supported by materials, which thus permits different abstract shading models to be used. It has a `MaterialClient` parameter, which 
+
+Example [Material] instances are:
+
+* [BaseMaterial] - 
+
+* [TexturedMaterial] -
+
+* [PbrMaterial] -
+
+A [Material] has a make_renderable() method that makes it renderable?
+
+A [RenderableMaterial] is a structure that provides 
+
 ## Vertices
 
-A [Vertices] object is a set of related [BufferView]s, and a 
+A [Vertices] object is a set of related [BufferView]s, with at least a
+view for indices and a view for vertex positions; it may have more
+views for additional attributes
+
+? A [RenderableVertices] can be constructed from a [Vertices]; this replaces the use of [BufferView]s with the underlying client types
 
 ## Object [Component]s
 
@@ -111,6 +129,8 @@ A [Primitive] contains:
 
 * a number of indices
 
+Note that a hierarchy of object [Component]s is implicitly `renderable` as it contains only indices, not actual references to [BufferView] data structures.
+
 ## Instantiable objects
 
 A 3D model [Object] consists of:
@@ -128,9 +148,8 @@ Such an object may have a plurality of render views created for it,
 for use with different visualizers (in OpenGL these could be different
 shaders, for example).
 
-Note: RenderableObjectClient is part of the ObjectClient?
-
-The [Object] also contains an array of [RenderableObjectClient]s which is one-to-one with the [Vertices]; this
+A [RenderableObject] 
+The [Object] also contains an array of [RenderableVertices] which is one-to-one with the [Vertices]; this
 permits something like a VAO for OpenGL to be generated for each
 [Vertices] for each [Shader]. An [Object] can then be drawn by
 (theoretically, and given a particular [SkeletonPose]):
@@ -169,7 +188,11 @@ The instance has a [Transformation], a [SkeletonPose], and a set of
 [Material] overrides; the [Material] overrides are an array of
 optional materials.
 
-For efficient rendering the object instance includes an array of the instance's [SkeletonPose] matrices plus the base instance [Transformation] matrix.
+For efficient rendering the object instance includes an array of the
+instance's [SkeletonPose] matrices plus the base instance
+[Transformation] matrix.
+
+## Rendering an instance
 
 A Vertices object is then used by a number of [Primitive]s; each of
 these borrows the Vertices object, and it owns an array of
@@ -279,7 +302,7 @@ pub use buffer_data::BufferData;
 pub use buffer_view::BufferView;
 
 mod traits;
-pub use traits::{TextureClient, Material, BufferClient, VerticesClient};
+pub use traits::{Renderable, TextureClient, MaterialClient, Material, BufferClient, VerticesClient};
 mod material;
 pub use material::{BaseMaterial, TexturedMaterial, PbrMaterial};
 pub use material::BaseData as MaterialBaseData;

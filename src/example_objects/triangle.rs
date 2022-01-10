@@ -1,8 +1,8 @@
-use crate::{BufferClient, BufferData, BufferView, VerticesClient, Vertices, BufferElementType};
+use crate::{BufferClient, Renderable, BufferData, BufferView, VerticesClient, Vertices, BufferElementType};
 use super::ExampleVertices;
 
 /// Create a new [Vertices] object with a triangle at z=0.
-pub fn new<'a, V:VerticesClient, B:BufferClient> (eg:&mut ExampleVertices<'a, V, B>, size:f32)  {
+pub fn new<'a, R:Renderable> (eg:&mut ExampleVertices<'a, R>, size:f32)  {
     let vertex_data = [-size,-size,0.0, size,-size,0.0, 0.0,size, 0.0];
     let index_data = [0u8,1,2];
 
