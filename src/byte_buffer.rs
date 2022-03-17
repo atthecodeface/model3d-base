@@ -30,14 +30,16 @@ pub trait ByteBuffer {
     /// Get the length of the data buffer in bytes
     fn byte_length(&self) -> usize;
     /// Borrow the data as an array of bytes
-    fn borrow_bytes (&self) -> &[u8];
+    fn borrow_bytes(&self) -> &[u8];
     /// Return a pointer to the first byte of the data contents
-    fn as_ptr(&self) -> *const u8 { self.borrow_bytes().as_ptr() }
+    fn as_ptr(&self) -> *const u8 {
+        self.borrow_bytes().as_ptr()
+    }
 }
 
 //ti ByteBuffer for [T; N]
 /// Implement ByteBuffer for [T]
-impl <T, const N:usize> ByteBuffer for [T; N] {
+impl<T, const N: usize> ByteBuffer for [T; N] {
     //fp byte_length
     fn byte_length(&self) -> usize {
         std::mem::size_of::<T>() * N
@@ -45,7 +47,7 @@ impl <T, const N:usize> ByteBuffer for [T; N] {
 
     //fp borrow_bytes
     fn borrow_bytes(&self) -> &[u8] {
-	unsafe { std::mem::transmute::<&[T], &[u8]>(self) }
+        unsafe { std::mem::transmute::<&[T], &[u8]>(self) }
     }
 
     //zz All done
@@ -53,7 +55,7 @@ impl <T, const N:usize> ByteBuffer for [T; N] {
 
 //ti ByteBuffer for Vec
 /// Implement ByteBuffer for Vec
-impl <T> ByteBuffer for Vec<T> {
+impl<T> ByteBuffer for Vec<T> {
     //fp byte_length
     fn byte_length(&self) -> usize {
         std::mem::size_of::<T>() * self.len()
@@ -61,7 +63,7 @@ impl <T> ByteBuffer for Vec<T> {
 
     //fp borrow_bytes
     fn borrow_bytes(&self) -> &[u8] {
-	    unsafe { std::mem::transmute::<&[T], &[u8]>(self) }
+        unsafe { std::mem::transmute::<&[T], &[u8]>(self) }
     }
 
     //zz All done

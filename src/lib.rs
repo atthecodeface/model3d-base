@@ -86,11 +86,19 @@ A [Skeleton] is similar to a `skin` in GLTF.
 
 ## Materials
 
-[Material] is a trait that must be supported by materials, which thus permits different abstract shading models to be used. It has a `MaterialClient` parameter, which 
+Materials are types that have the [Material] trait, and which have the
+lifetime of the [BufferData] of the object they belong to; this is
+because they may contain textures. As such they have an associated
+Renderable::Material type, which has a lifetime as defined by the
+Renderable.
+
+[Material] is a trait that must be supported by materials, which thus
+permits different abstract shading models to be used. It has a
+`MaterialClient` parameter, which
 
 Example [Material] instances are:
 
-* [BaseMaterial] - 
+* [BaseMaterial] -
 
 * [TexturedMaterial] -
 
@@ -98,22 +106,23 @@ Example [Material] instances are:
 
 A [Material] has a make_renderable() method that makes it renderable?
 
-A [RenderableMaterial] is a structure that provides 
-
 ## Vertices
 
 A [Vertices] object is a set of related [BufferView]s, with at least a
 view for indices and a view for vertex positions; it may have more
-views for additional attributes
+views for additional attributes. It has lifetime is no longer than
+that of the [BufferData] from which the [BufferView]s are made.
 
-? A [RenderableVertices] can be constructed from a [Vertices]; this replaces the use of [BufferView]s with the underlying client types
+A [RenderContext::Vertices] can be constructed from a [Vertices]; this
+is a renderer-specific vertices instance that replaces the use of
+[BufferView]s with the underlying client types.
 
 ## Object [Component]s
 
-A [Component] is part of the hierarchy of an [Object] and has no meaning without it;
-the indices and materials used in the [Component] are provided by the
-[Object]. The [Component] has a [Transformation] (relative to its
-parent) and a [Mesh].
+A [Component] is part of the hierarchy of an [Object] and has no
+meaning without it; the indices and materials used in the [Component]
+are provided by the [Object]. The [Component] has a [Transformation]
+(relative to its parent) and a [Mesh].
 
 A [Mesh] contains an array of [Primitive]s
 
@@ -121,7 +130,9 @@ A [Primitive] contains:
 
 * a [Material] (from an index within the [Object])
 
-* a set of [Vertices] - the attributes required by the [Mesh] and a set of indices, a subset of which are used by the [Primitive] (from an index within the [Object])
+* a set of [Vertices] - the attributes required by the [Mesh] and a
+  set of indices, a subset of which are used by the [Primitive] (from
+  an index within the [Object])
 
 * a drawable element type ([PrimitiveType] such as `TriangleStrip`)
 
@@ -129,7 +140,24 @@ A [Primitive] contains:
 
 * a number of indices
 
-Note that a hierarchy of object [Component]s is implicitly `renderable` as it contains only indices, not actual references to [BufferView] data structures.
+Note that a hierarchy of object [Component]s is implicitly
+`renderable` as it contains only indices, not actual references to
+[BufferView] data structures.
+
+A hierarchy of object [Component]s can be reduced to an
+[ObjectRenderRecipe]; this is an array of:
+
+* transformation matrix
+
+* material index (in a [Primitive])
+
+* vertices index (in a [Primitive])
+
+* drawable element type (in a [Primitive])
+
+* index offset (in a [Primitive])
+
+* index count (in a [Primitive])
 
 ## Instantiable objects
 
@@ -148,10 +176,11 @@ Such an object may have a plurality of render views created for it,
 for use with different visualizers (in OpenGL these could be different
 shaders, for example).
 
-A [RenderableObject] 
-The [Object] also contains an array of [RenderableVertices] which is one-to-one with the [Vertices]; this
-permits something like a VAO for OpenGL to be generated for each
-[Vertices] for each [Shader]. An [Object] can then be drawn by
+An object can be turned in to a renderable object within a
+Renderable::Context using the `create_client` method.  Once created
+(unless the renderable context requires it) the object can be dropped.
+
+A renderable [Object] can then be drawn by
 (theoretically, and given a particular [SkeletonPose]):
 
 * Generating the [BonePose] mesh-to-model-space matrices for each bone in the [Skeleton]
@@ -160,9 +189,12 @@ permits something like a VAO for OpenGL to be generated for each
 
 * Apply the node's Transformation
 
-* Render the node's [Primitive]s using the [Object]s material at the correct index, with the [RenderableObjectClient] associated with the [Vertices] index of the mesh
+* Render the node's [Primitive]s using the [Object]s material at the
+  correct index, with the [RenderableObjectClient] associated with the
+  [Vertices] index of the mesh
 
-For efficiency of rendering the [Object] can have a [ObjectRenderRecipe] created; this is an array of:
+For efficiency of rendering the [Object] can have a
+[ObjectRenderRecipe] created; this is an array of:
 
 * transformation matrix
 
@@ -178,7 +210,7 @@ For efficiency of rendering the [Object] can have a [ObjectRenderRecipe] created
 
 This can be generated by the client using an iterator:
 
-get_iter() -> (recipe length, Iter<matrix, material index, vertices index, drawable elemtn type, index offset, index count>
+get_iter() -> (recipe length, Iter<matrix, material index, vertices index, drawable element type, index offset, index count>
 
 ## Instantiated objects
 
@@ -273,11 +305,11 @@ node content may be updated at will.
 !*/
 
 mod types;
-pub use types::{Vec3, Vec4, Mat3, Mat4, Quat};
-pub use types::{BufferElementType};
+pub use types::BufferElementType;
+pub use types::MaterialAspect;
+pub use types::{Mat3, Mat4, Quat, Vec3, Vec4};
 pub use types::{PrimitiveType, VertexAttr};
-pub use types::{MaterialAspect};
-    
+
 //a Imports and exports
 pub mod hierarchy;
 
@@ -294,39 +326,39 @@ mod skeleton_pose;
 pub use skeleton::Skeleton;
 pub use skeleton_pose::SkeletonPose;
 
-mod byte_buffer;
 mod buffer_data;
 mod buffer_view;
-pub use byte_buffer::ByteBuffer;
+mod byte_buffer;
 pub use buffer_data::BufferData;
 pub use buffer_view::BufferView;
+pub use byte_buffer::ByteBuffer;
 
 mod traits;
-pub use traits::{Renderable, TextureClient, MaterialClient, Material, BufferClient, VerticesClient};
+pub use traits::{
+    BufferClient, ViewClient, Material, MaterialClient, Renderable, TextureClient, VerticesClient,
+};
 mod material;
-pub use material::{BaseMaterial, TexturedMaterial, PbrMaterial};
 pub use material::BaseData as MaterialBaseData;
+pub use material::{BaseMaterial, PbrMaterial, TexturedMaterial};
 
 mod vertices;
 pub use vertices::Vertices;
-mod primitive;
 mod mesh;
-pub use primitive::Primitive;
+mod primitive;
 pub use mesh::Mesh;
+pub use primitive::Primitive;
 
 mod component;
 pub use component::Component;
+mod render_recipe;
+pub use render_recipe::RenderRecipe;
 mod object;
 pub use object::Object;
 
-/*
 mod instantiable;
-mod instance;
 pub use instantiable::Instantiable;
+mod instance;
 pub use instance::Instance;
- */
 
 pub mod example_objects;
 pub use example_objects::ExampleVertices;
-
-

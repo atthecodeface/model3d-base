@@ -59,14 +59,14 @@ impl Transformation {
     /// Copy the transformation from another
     pub fn copy_from(&mut self, other: &Self) {
         self.translation = other.translation.clone();
-        self.scale       = other.scale.clone();
-        self.rotation    = other.rotation.clone();
+        self.scale = other.scale.clone();
+        self.rotation = other.rotation.clone();
     }
 
     //mp combine
     /// Combine two transformations into this
     ///
-    /// To operate correctly the scales must be 
+    /// To operate correctly the scales must be
     pub fn combine(&mut self, base: &Self, other: &Self) {
         self.rotation = quat::multiply(&base.rotation, &other.rotation);
         self.translation = base.translation.clone();

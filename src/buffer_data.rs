@@ -23,7 +23,7 @@ limitations under the License.
 //a Imports
 use std::cell::RefCell;
 
-use crate::{ByteBuffer, BufferClient};
+use crate::{BufferClient, ByteBuffer, Renderable};
 
 //a BufferData
 //tp BufferData
@@ -49,24 +49,24 @@ use crate::{ByteBuffer, BufferClient};
 ///
 /// OpenGL will have one copy of the data for all the primitives and models.
 #[derive(Debug)]
-pub struct BufferData<'a, T:BufferClient> {
+pub struct BufferData<'a, R: Renderable + ?Sized> {
     /// Data buffer itself
-    data        : &'a [u8],
+    data: &'a [u8],
     /// Offset in to the data buffer for the first byte
-    pub byte_offset : u32,
+    pub byte_offset: u32,
     /// Length of data used in the buffer
-    pub byte_length : u32,
+    pub byte_length: u32,
     /// The client bound to data[byte_offset] .. + byte_length
     ///
     /// This must be held as a [RefCell] as the [BufferData] is
     /// created early in the process, prior to any `BufferView`s using
-    /// it - which then have shared references to the daata - but the
+    /// it - which then have shared references to the data - but the
     /// client is created afterwards
-    rc_client   : RefCell<T>,
+    rc_client: RefCell<R::Buffer>,
 }
 
 //ip BufferData
-impl <'a,T:BufferClient> BufferData<'a, T> {
+impl<'a, R: Renderable> BufferData<'a, R> {
     //fp new
     /// Create a new `BufferData` given a buffer, offset and length; if the
     /// length is zero then the whole of the data buffer post offset
@@ -76,67 +76,59 @@ impl <'a,T:BufferClient> BufferData<'a, T> {
     ///
     /// This function can be invoked prior to the OpenGL context being
     /// created; this performs no OpenGL calls
-    pub fn new(data:&'a dyn ByteBuffer, byte_offset:u32, byte_length:u32) -> Self {
+    pub fn new(data: &'a dyn ByteBuffer, byte_offset: u32, byte_length: u32) -> Self {
         let byte_length = {
-            if byte_length == 0 { (data.byte_length() as u32)-byte_offset } else { byte_length }
+            if byte_length == 0 {
+                (data.byte_length() as u32) - byte_offset
+            } else {
+                byte_length
+            }
         };
-        let rc_client = RefCell::new(T::none());
+        let rc_client = RefCell::new(R::Buffer::default());
         let data = data.borrow_bytes();
-        Self { data, byte_offset, byte_length, rc_client }
+        Self {
+            data,
+            byte_offset,
+            byte_length,
+            rc_client,
+        }
+    }
+
+    //mp create_client
+    /// Replace the client data with one of this data
+    pub fn create_client(&self, render_context: &mut R::Context) {
+        self.rc_client.borrow_mut().create(self, render_context);
     }
 
     //ap borrow_client
     /// Borrow the client
-    pub fn borrow_client(&self) -> &RefCell<T> {
-        &self.rc_client
-    }
-
-    //mp create_client
-    /// Create the client data (if not none) with a given reason
-    pub fn create_client(&self, reason:usize) {
-        self.rc_client.borrow_mut().create(self, reason);
-    }
-
-    //mp drop_client
-    /// Destroy the client data (should set it to none)
-    ///
-    /// Zero is reserved for dropping due to this [BufferData] being dropped
-    pub fn drop_client(&self, reason:usize) {
-        self.rc_client.borrow_mut().drop(self, reason);
+    pub fn borrow_client(&self) -> std::cell::Ref<R::Buffer> {
+        self.rc_client.borrow()
     }
 
     //mp as_ptr
     /// Get a const u8 ptr to the data itself
     pub fn as_ptr(&self) -> *const u8 {
-        unsafe {
-            self.data.as_ptr().add(self.byte_offset as usize)
-        }
+        unsafe { self.data.as_ptr().add(self.byte_offset as usize) }
     }
 
     //zz All done
 }
 
-//ip Drop for BufferData
-impl <'a, T:BufferClient> Drop for BufferData<'a, T> {
-    //fp drop
-    /// Drop the client by issuing a drop with a reason of 0
-    ///
-    /// This allows a client to differentiate between it being dropped
-    /// and the [BufferData] being dropped causing any reference to be
-    /// dropped
-    fn drop(&mut self) {
-        self.rc_client.borrow_mut().drop(self, 0);
-    }
-}
-
 //ip Display for BufferData
-impl <'a, T:BufferClient> std::fmt::Display for BufferData<'a, T> {
-    fn fmt(&self, f:&mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+impl<'a, R: Renderable + ?Sized> std::fmt::Display for BufferData<'a, R> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         let data_ptr = self.data.as_ptr();
-        write!(f,"BufferData[{:?}+{}#{}]:GL({})", data_ptr, self.byte_offset, self.byte_length, self.rc_client.borrow())
+        write!(
+            f,
+            "BufferData[{:?}+{}#{}]:GL({})",
+            data_ptr,
+            self.byte_offset,
+            self.byte_length,
+            self.rc_client.borrow()
+        )
     }
 }
 
 //ip DefaultIndentedDisplay for BufferData
-impl <'a, T:BufferClient> indent_display::DefaultIndentedDisplay for BufferData<'a, T> {}
-
+impl<'a, R: Renderable + ?Sized> indent_display::DefaultIndentedDisplay for BufferData<'a, R> {}

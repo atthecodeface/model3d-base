@@ -21,25 +21,12 @@ limitations under the License.
 //
 
 //a Imports
-use geo_nd::{matrix};
+use crate::hierarchy;
+use hierarchy::Hierarchy;
 
-use crate::{Mat4, Transformation, Skeleton, Instance};
+use crate::{Component, Renderable, Skeleton, RenderRecipe, Vertices, Material, Instance};
 
 //a Instantiable
-//ti SkeletonAndOffset
-struct SkeletonAndOffset {
-    set:Skeleton,
-    bone_matrix_index:usize
-}
-
-//ti MeshIndexData
-pub struct MeshIndexData {
-    /// Index to the mesh matrices of the first mesh for the Skeleton
-    pub mesh_matrix_index: usize,
-    /// Pair of usize
-    pub bone_matrices    : (usize, usize)
-}
-
 //tp Instantiable
 /// An Instantiable is a type that is related to a set of Mesh data, which can be instanced for different drawable::Instance's
 ///
@@ -55,21 +42,28 @@ pub struct MeshIndexData {
 /// The content of the Instantiable includes an array of Skeletons and
 /// mesh transformation matrices, with appropriate index values. These
 /// index values are into the related set of Mesh data.
-pub struct Instantiable {
-    /// The sets of bones, each of which will have a pose, and a corresponding first bone matrix
-    bones   : Vec<SkeletonAndOffset>,
-    /// Transformation matrices for the meshes
-    pub mesh_matrices   : Vec<Mat4>,
-    /// An array indexed by the associated mesh data index value, and for each such index the content
-    /// is an index in to this structure's mesh_matrices, and the range of bone matrices required by that associated mesh data.
-    /// If the associated mesh data requires no bones then the tuple will be (0,0)
-    mesh_data : Vec<MeshIndexData>,
+#[derive(Debug)]
+pub struct Instantiable<R>
+where
+    R: Renderable,
+{
+    /// Skeleton
+    pub skeleton: Option<Skeleton>,
+    /// All the vertices used
+    pub vertices: Vec<R::Vertices>,
+    /// All the materials used
+    // pub materials : Vec<&'a dyn Material<R>>,
+    /// Render recipe
+    pub render_recipe: RenderRecipe,
     /// Number of bone matrices required for all the bone sets in this structure
-    pub num_bone_matrices : usize,
+    pub num_bone_matrices: usize,
 }
 
 //ip Instantiable
-impl Instantiable {
+impl<R> Instantiable<R>
+where
+    R: Renderable,
+{
     //fp new
     /// Create a new instantiable drawable - something to which meshes
     /// and bone sets will be added, and for which a set of mesh
@@ -78,65 +72,94 @@ impl Instantiable {
     /// Such a type can that be 'instance'd with a specific
     /// transformation and bone poses, and such instances can then be
     /// drawn using shaders.
-    pub fn new() -> Self {
-        let bones = Vec::new();
-        let mesh_matrices = Vec::new();
-        let mesh_data = Vec::new();
+    pub fn new(skeleton: Option<Skeleton>,
+               vertices: Vec<&Vertices<R>>,
+               _materials: Vec<&dyn Material<R>>,
+               mut components: Hierarchy<Component>) -> Self {
+        components.find_roots();
+        let render_recipe = RenderRecipe::from_component_hierarchy(&components);
         let num_bone_matrices = 0;
-        Self { bones, mesh_matrices, mesh_data, num_bone_matrices }
-    }
-
-    //mp add_mesh
-    /// Add a mesh with an optional parent mesh_data index (and hence parent transformation) and bone_matrices
-    pub fn add_mesh(&mut self, parent:&Option<usize>, transformation:&Option<Mat4>, bone_matrices:&(usize,usize)) -> usize {
-        let mesh_matrix_index = {
-            if let Some(parent) = parent {
-                let parent = self.mesh_data[*parent].mesh_matrix_index;
-                if let Some(transformation) = transformation {
-                    let n = self.mesh_matrices.len();
-                    // let t = transformation.mat4();
-                    let m = matrix::multiply4(&self.mesh_matrices[parent], transformation);
-                    self.mesh_matrices.push(m);
-                    n
-                } else {
-                    parent
-                }
-            } else if let Some(transformation) = transformation { // parent is none
-                let n = self.mesh_matrices.len();
-                // let t = transformation.mat4();
-                let t = transformation.clone();
-                self.mesh_matrices.push(t);
-                n
-            } else { // both are none - requires an identity matrix
-                let n = self.mesh_matrices.len();
-                self.mesh_matrices.push(matrix::identity4());
-                n
-            }
-        };
-        let n = self.mesh_data.len();
-        self.mesh_data.push( MeshIndexData {mesh_matrix_index, bone_matrices:*bone_matrices} );
-        n
-    }
-
-    //mp add_bone_set
-    /// Add a bone set; clones it, and generates a number of bone matrices and updates appropriately, returning the range of bone matrices that the set corresponds to
-    pub fn add_bone_set(&mut self, _bone_set:&Skeleton) -> (usize, usize) {
-        (0,0)
-    }
-
-    //mp borrow_mesh_data
-    /// Borrow the mesh data
-    pub fn borrow_mesh_data (&self, index:usize) -> &MeshIndexData {
-        &self.mesh_data[index]
+        let vertices = vertices.into_iter().map( |v| v.borrow_client().clone()).collect();
+        Self {
+            skeleton,
+            vertices,
+            render_recipe,
+            num_bone_matrices,
+        }
     }
 
     //mp instantiate
     /// Create an `Instance` from this instantiable - must be used with accompanying mesh data in the appropriate form for the client
     /// Must still add bone_poses one per bone set
-    pub fn instantiate<'a>(&'a self) -> Instance<'a> {
+    pub fn instantiate<'a>(&'a self) -> Instance<'a, R> {
         Instance::new(self, self.num_bone_matrices)
     }
 
     //zz All done
 }
 
+/*
+    //mp borrow_mesh_data
+    /// Borrow the mesh data
+    pub fn borrow_mesh_data (&self, index:usize) -> &MeshIndexData {
+        &self.mesh_data[index]
+    }
+
+    pub fn add_meshes_of_node_iter(&self, meshes:&mut Vec<usize>, drawable:&mut drawable::Instantiable, iter:NodeIter<ObjectNode>) {
+        let mut parent = None;
+        let mut transformation = None;
+        let mut bone_matrices = (0,0);
+        let mut mesh_stack = Vec::new();
+        for op in iter {
+            match op {
+                NodeIterOp::Push((n,obj_node), _has_children) => {
+                    mesh_stack.push((parent, transformation, bone_matrices));
+                    if let Some(bone_set) = obj_node.bones {
+                        bone_matrices = drawable.add_bone_set(bone_set);
+                    }
+                    if let Some(obj_transformation) = &obj_node.transformation {
+                        if transformation.is_none() {
+                            transformation = Some(obj_transformation.mat4());
+                        } else {
+                            transformation = Some(matrix::multiply4(&transformation.unwrap(), &obj_transformation.mat4()));
+                        }
+                    }
+                    if obj_node.mesh.is_some() {
+                        let index = drawable.add_mesh(&parent, &transformation, &bone_matrices);
+                        assert_eq!(index, meshes.len());
+                        meshes.push(n);
+                        parent = Some(index);
+                        transformation = None;
+                    }
+                },
+                NodeIterOp::Pop(_,_) => {
+                    let ptb = mesh_stack.pop().unwrap();
+                    parent = ptb.0;
+                    transformation = ptb.1;
+                    bone_matrices = ptb.2;
+                },
+            }
+        }
+    }
+
+    pub fn create_instantiable(&mut self) -> drawable::Instantiable {
+        self.nodes.find_roots();
+        let mut drawable = drawable::Instantiable::new();
+        let mut meshes = Vec::new();
+        for r in self.nodes.borrow_roots() {
+            self.add_meshes_of_node_iter(&mut meshes, &mut drawable, self.nodes.iter_from_root(*r));
+        }
+        self.meshes = meshes;
+        drawable
+    }
+    pub fn bind_shader<'b, S:ShaderClass>(&self, drawable:&'b drawable::Instantiable, shader:&S) -> shader::Instantiable<'b> {
+        let mut s = shader::Instantiable::new(drawable);
+        for i in 0..self.meshes.len() {
+            let obj_node = self.nodes.borrow_node(self.meshes[i]);
+            assert!(obj_node.mesh.is_some(), "Mesh at node must be Some() for it to have been added to the self.meshes array by add_meshes_of_node_iter");
+            let mesh = obj_node.mesh.unwrap();
+            mesh.add_shader_drawables(shader, &mut s);
+        }
+        s
+    }
+*/

@@ -17,26 +17,28 @@ limitations under the License.
  */
 
 //a Imports
-use crate::{Renderable, TextureClient, VerticesClient, BufferClient};
-use crate::{Transformation, Skeleton, Material, Component, Mesh, Vertices};
 use crate::hierarchy;
-use hierarchy::{Hierarchy};
+use crate::Renderable;
+use crate::{Component, RenderRecipe, Material, Mesh, Skeleton, Transformation, Vertices, Instantiable};
+use hierarchy::Hierarchy;
 
 //a Object
+//tp Object
 /// A hierarchy of ObjectNode's
 ///
 /// This can be flattened in to an Instantiable
 pub struct Object<'a, R>
-where R:Renderable
+where
+    R: Renderable,
 {
     /// Skeleton
-    pub skeleton : Option<Skeleton>,
+    pub skeleton: Option<Skeleton>,
     /// All the vertices used
-    pub vertices : Vec<&'a Vertices<'a, R::Vertices, R::Buffer>>,
+    pub vertices: Vec<&'a Vertices<'a, R>>,
     /// All the materials used
-    pub materials : Vec<&'a dyn Material<R>>,
+    pub materials: Vec<&'a dyn Material<R>>,
     /// The meshes etc that make up the object
-    pub components   : Hierarchy<Component>,
+    pub components: Hierarchy<Component>,
     // The roots of the bones and hierarchical recipes for traversal
     // pub roots   : Vec<(usize, Recipe)>,
     // Meshes - indices in to nodes.nodes array of the meshes in the order of instance
@@ -44,8 +46,10 @@ where R:Renderable
 }
 
 //ip Object
-impl <'a, R> Object<'a, R>
-    where R:Renderable {
+impl<'a, R> Object<'a, R>
+where
+    R: Renderable,
+{
     //fp new
     /// Create a new [Object] with no components
     pub fn new() -> Self {
@@ -53,113 +57,93 @@ impl <'a, R> Object<'a, R>
         let vertices = Vec::new();
         let materials = Vec::new();
         let components = Hierarchy::new();
-        // let roots = Vec::new();
-        // let meshes = Vec::new();
-        Self { skeleton, vertices, materials, components }
+        Self {
+            skeleton,
+            vertices,
+            materials,
+            components,
+        }
     }
 
     //mp add_vertices
-    pub fn add_vertices(&mut self, vertices:&'a Vertices<'a, R::Vertices, R::Buffer>) -> usize {
+    /// Add vertices to the object
+    pub fn add_vertices(&mut self, vertices: &'a Vertices<'a, R>) -> usize {
         let n = self.vertices.len();
         self.vertices.push(vertices);
         n
     }
 
     //mp borrow_vertices
-    pub fn borrow_vertices(&self, n:usize) -> &Vertices<'a, R::Vertices, R::Buffer> {
+    /// Borrow one of the vertices
+    pub fn borrow_vertices(&self, n: usize) -> &Vertices<'a, R> {
         self.vertices[n]
     }
 
     //fp add_material
-    pub fn add_material(&mut self, material:&'a dyn Material<R>) -> usize {
+    /// Add a material to the object
+    pub fn add_material(&mut self, material: &'a dyn Material<R>) -> usize {
         let n = self.materials.len();
         self.materials.push(material);
         n
     }
 
     //mp borrow_material
-    pub fn borrow_material(&self, n:usize) -> &dyn Material<R> {
+    /// Borrow a materiaal from the object
+    pub fn borrow_material(&self, n: usize) -> &dyn Material<R> {
         self.materials[n]
     }
 
     //fp add_component
     /// Add a component to the hierarchy
-    pub fn add_component(&mut self,
-                         parent : Option<usize>,
-                         transformation : Option<Transformation>,
-                         mesh : Mesh ) -> usize {
+    pub fn add_component(
+        &mut self,
+        parent: Option<usize>,
+        transformation: Option<Transformation>,
+        mesh: Mesh,
+    ) -> usize {
         let node = Component::new(transformation, mesh);
         let child = self.components.add_node(node);
         if let Some(parent) = parent {
-            self.components.relate( parent, child);
+            self.components.relate(parent, child);
         }
         child
     }
 
     //fp relate
     /// Add a relation between two components
-    pub fn relate(&mut self, parent:usize, child:usize) {
-        self.components.relate( parent, child);
+    pub fn relate(&mut self, parent: usize, child: usize) {
+        self.components.relate(parent, child);
     }
 
-    /*
-    pub fn add_meshes_of_node_iter(&self, meshes:&mut Vec<usize>, drawable:&mut drawable::Instantiable, iter:NodeIter<ObjectNode>) {
-        let mut parent = None;
-        let mut transformation = None;
-        let mut bone_matrices = (0,0);
-        let mut mesh_stack = Vec::new();
-        for op in iter {
-            match op {
-                NodeIterOp::Push((n,obj_node), _has_children) => {
-                    mesh_stack.push((parent, transformation, bone_matrices));
-                    if let Some(bone_set) = obj_node.bones {
-                        bone_matrices = drawable.add_bone_set(bone_set);
-                    }
-                    if let Some(obj_transformation) = &obj_node.transformation {
-                        if transformation.is_none() {
-                            transformation = Some(obj_transformation.mat4());
-                        } else {
-                            transformation = Some(matrix::multiply4(&transformation.unwrap(), &obj_transformation.mat4()));
-                        }
-                    }
-                    if obj_node.mesh.is_some() {
-                        let index = drawable.add_mesh(&parent, &transformation, &bone_matrices);
-                        assert_eq!(index, meshes.len());
-                        meshes.push(n);
-                        parent = Some(index);
-                        transformation = None;
-                    }
-                },
-                NodeIterOp::Pop(_,_) => {
-                    let ptb = mesh_stack.pop().unwrap();
-                    parent = ptb.0;
-                    transformation = ptb.1;
-                    bone_matrices = ptb.2;
-                },
-            }
+    //mp analyze
+    /// Analyze 
+    pub fn analyze(
+        &mut self,
+    )  {
+        self.components.find_roots();
+    }
+
+    //mp create_render_recipe
+    pub fn create_render_recipe(&self) -> RenderRecipe {
+        RenderRecipe::from_component_hierarchy(&self.components)
+    }
+
+    //mp create_client
+    /// Create the clients associated with the object - for vertices and materials
+    pub fn create_client(&self, render_context: &mut R::Context) {
+        for v in &self.vertices {
+            v.create_client(render_context);
         }
     }
 
-    pub fn create_instantiable(&mut self) -> drawable::Instantiable {
-        self.nodes.find_roots();
-        let mut drawable = drawable::Instantiable::new();
-        let mut meshes = Vec::new();
-        for r in self.nodes.borrow_roots() {
-            self.add_meshes_of_node_iter(&mut meshes, &mut drawable, self.nodes.iter_from_root(*r));
-        }
-        self.meshes = meshes;
-        drawable
+    //dp into_instantiable
+    pub fn into_instantiable(self) -> Instantiable<R> {
+        Instantiable::new(self.skeleton,
+                          self.vertices,
+                          self.materials,
+                          self.components,
+                          )
     }
-    pub fn bind_shader<'b, S:ShaderClass>(&self, drawable:&'b drawable::Instantiable, shader:&S) -> shader::Instantiable<'b> {
-        let mut s = shader::Instantiable::new(drawable);
-        for i in 0..self.meshes.len() {
-            let obj_node = self.nodes.borrow_node(self.meshes[i]);
-            assert!(obj_node.mesh.is_some(), "Mesh at node must be Some() for it to have been added to the self.meshes array by add_meshes_of_node_iter");
-            let mesh = obj_node.mesh.unwrap();
-            mesh.add_shader_drawables(shader, &mut s);
-        }
-        s
-    }
-*/
+    
+    //zz All done
 }
-

@@ -17,7 +17,7 @@ limitations under the License.
  */
 
 //a Imports
-use indent_display::{IndentedDisplay, IndentedOptions, NullOptions, Indenter};
+use indent_display::{IndentedDisplay, IndentedOptions, Indenter, NullOptions};
 
 use crate::hierarchy;
 use crate::Bone;
@@ -30,6 +30,7 @@ use crate::Transformation;
 ///
 /// This corresponds to a skeleton (or a number thereof), with each
 /// bone appearing once in each skeleton. The bones form a hierarchy.
+#[derive(Debug)]
 pub struct Skeleton {
     /// The bones that make up the set, with the hierarchical relationships
     pub skeleton: hierarchy::Hierarchy<Bone>,
@@ -164,7 +165,7 @@ impl Skeleton {
                         } else {
                             self.temp_mat4s[mat_depth] = *bones[*n]
                                 .data
-                                .derive_matrices(false, &self.temp_mat4s[mat_depth-1]);
+                                .derive_matrices(false, &self.temp_mat4s[mat_depth - 1]);
                         }
                         mat_depth += 1;
                     }
@@ -186,9 +187,7 @@ impl Skeleton {
 }
 
 //ip IndentedDisplay for Skeleton
-impl<'a, Opt: IndentedOptions<'a>> IndentedDisplay<'a, Opt>
-    for Skeleton
-{
+impl<'a, Opt: IndentedOptions<'a>> IndentedDisplay<'a, Opt> for Skeleton {
     //mp fmt
     /// Display for humans with indent
     fn indent(&self, f: &mut Indenter<'a, Opt>) -> std::fmt::Result {
@@ -197,8 +196,7 @@ impl<'a, Opt: IndentedOptions<'a>> IndentedDisplay<'a, Opt>
 }
 
 //ip Display for Skeleton
-impl std::fmt::Display for Skeleton
-{
+impl std::fmt::Display for Skeleton {
     //mp fmt
     /// Display for humans with indent
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -209,4 +207,3 @@ impl std::fmt::Display for Skeleton
         write!(f, "{}", &String::from_utf8(v).unwrap())
     }
 }
-

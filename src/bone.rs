@@ -46,6 +46,7 @@ use crate::{Mat4, Transformation};
 ///  bone_relative = C.ptb * B.ptb * A.ptb * mesh
 ///  root = A.btp * B.btp * C.btp * C_bone_relative
 ///  animated(t) = A.btp(t) * B.btp(t) * C.btp(t) * C.ptb * B.ptb * A.ptb * mesh
+#[derive(Debug)]
 pub struct Bone {
     /// rest transform - translation, scale, rotation
     pub transformation: Transformation,
@@ -111,13 +112,16 @@ impl Bone {
     pub fn borrow_ptb(&self) -> &Mat4 {
         &self.ptb
     }
-
 }
 
 //ip Display for Bone
 impl std::fmt::Display for Bone {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "Bone {} : {} : mtb={:?}", self.matrix_index, self.transformation, self.mtb)
+        write!(
+            f,
+            "Bone {} : {} : mtb={:?}",
+            self.matrix_index, self.transformation, self.mtb
+        )
     }
 }
 

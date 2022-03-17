@@ -17,7 +17,7 @@ limitations under the License.
  */
 
 //a Imports
-use crate::{Transformation, Mesh};
+use crate::{Mesh, Transformation};
 
 //a Component
 //tp Component
@@ -25,21 +25,23 @@ use crate::{Transformation, Mesh};
 ///
 /// Frequently an object will contain a single [Component] with no
 /// transformation, just the mesh
-pub struct Component
-{
+#[derive(Debug)]
+pub struct Component {
     /// The transformation to apply to the whole mesh
-    pub transformation : Option<Transformation>,
+    pub transformation: Option<Transformation>,
     /// The mesh associated with the component
-    pub mesh           : Mesh,
+    pub mesh: Mesh,
 }
 
 //ip Component
 impl Component {
     //fp new
     /// Create a new [Component]
-    pub fn new( transformation : Option<Transformation>,
-                mesh : Mesh ) -> Self {
-        Self { transformation, mesh }
+    pub fn new(transformation: Option<Transformation>, mesh: Mesh) -> Self {
+        Self {
+            transformation,
+            mesh,
+        }
     }
-}
 
+}

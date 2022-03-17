@@ -42,6 +42,8 @@ pub enum BufferElementType {
 /// additional attributes may or maynot be provided by a model
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VertexAttr {
+    /// Position (3xf32) of the point
+    Position,
     /// Normal (3xf32) at the point
     Normal,
     /// Color at the point (4xf32)
@@ -98,4 +100,3 @@ pub enum MaterialAspect {
     /// Emission (as f32)
     Emission,
 }
-

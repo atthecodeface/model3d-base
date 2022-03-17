@@ -1,13 +1,13 @@
-use model3d::{Transformation, Skeleton};
+use model3d::{Skeleton, Transformation};
 
 fn build_bone_set() -> Skeleton {
     let mut skeleton = Skeleton::new();
-    let b0 = skeleton.add_bone( Transformation::new(), 0 );
-    let b1 = skeleton.add_bone( Transformation::new().set_translation([1.,0.,0.]), 0 );
-    let b2 = skeleton.add_bone( Transformation::new().set_translation([0.,1.,0.]), 0 );
-    let b3 = skeleton.add_bone( Transformation::new().set_translation([0.,0.,1.]), 0 );
-    let b21 = skeleton.add_bone( Transformation::new().set_translation([0.5,0.,0.]), 0 );
-    let b22 = skeleton.add_bone( Transformation::new().set_translation([0.0,0.,0.5]), 0 );
+    let b0 = skeleton.add_bone(Transformation::new(), 0);
+    let b1 = skeleton.add_bone(Transformation::new().set_translation([1., 0., 0.]), 0);
+    let b2 = skeleton.add_bone(Transformation::new().set_translation([0., 1., 0.]), 0);
+    let b3 = skeleton.add_bone(Transformation::new().set_translation([0., 0., 1.]), 0);
+    let b21 = skeleton.add_bone(Transformation::new().set_translation([0.5, 0., 0.]), 0);
+    let b22 = skeleton.add_bone(Transformation::new().set_translation([0.0, 0., 0.5]), 0);
     skeleton.relate(b0, b1);
     skeleton.relate(b0, b2);
     skeleton.relate(b0, b3);
@@ -21,7 +21,7 @@ fn build_bone_set() -> Skeleton {
 #[test]
 fn test_0() {
     let skeleton = build_bone_set();
-    println!("{}",skeleton);
+    println!("{}", skeleton);
     assert_eq!(1, skeleton.iter_roots().count());
     // assert!(false);
 }
@@ -30,10 +30,13 @@ fn test_0() {
 fn test_1() {
     let mut skeleton = build_bone_set();
     skeleton.derive_matrices();
-    println!("{}",skeleton);
-    assert_eq!(skeleton.skeleton.borrow_node(4).borrow_mtb(),
-               &[1.,0.,0.,0., 0.,1.,0.,0., 0.,0.,1.,0., -0.5,-1.,0.,1.]);
-    assert_eq!(skeleton.skeleton.borrow_node(5).borrow_mtb(),
-               &[1.,0.,0.,0., 0.,1.,0.,0., 0.,0.,1.,0., 0.,-1.,-0.5,1.]);
+    println!("{}", skeleton);
+    assert_eq!(
+        skeleton.skeleton.borrow_node(4).borrow_mtb(),
+        &[1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., -0.5, -1., 0., 1.]
+    );
+    assert_eq!(
+        skeleton.skeleton.borrow_node(5).borrow_mtb(),
+        &[1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., -1., -0.5, 1.]
+    );
 }
-

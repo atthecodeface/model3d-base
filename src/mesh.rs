@@ -27,10 +27,9 @@ use crate::Primitive;
 /// The [Mesh] depends on being in an 3D model object, as it is the
 /// object that contains the actual materials and vertices to use
 #[derive(Debug, Default)]
-pub struct Mesh
-{
+pub struct Mesh {
     /// The primitive
-    pub primitives : Vec<Primitive>,
+    pub primitives: Vec<Primitive>,
 }
 
 //ip Mesh
@@ -38,13 +37,13 @@ impl Mesh {
     //fp new
     /// Create a new mesh
     pub fn new() -> Self {
-        let primitives  = Vec::new();
+        let primitives = Vec::new();
         Self { primitives }
     }
 
     //mp add_primitive
     /// Add a primitive to the [Mesh]
-    pub fn add_primitive(&mut self, primitive:Primitive) {
+    pub fn add_primitive(&mut self, primitive: Primitive) {
         self.primitives.push(primitive);
     }
 

@@ -31,7 +31,11 @@ const DEBUG_ITERATOR: bool = false;
 //a Node
 //tp Node
 /// A node in the hierarchy
-pub struct Node<T> {
+#[derive(Debug)]
+pub struct Node<T>
+where
+    T: std::fmt::Debug,
+{
     /// An optional parent index - if None, this is a root
     parent: Option<usize>,
     /// Array of child indices
@@ -40,8 +44,28 @@ pub struct Node<T> {
     pub data: T,
 }
 
+//ip Clone for Node<T:Clone>
+impl<T> Clone for Node<T>
+where
+    T: Clone + std::fmt::Debug,
+{
+    fn clone(&self) -> Self {
+        let parent = self.parent.clone();
+        let children = self.children.clone();
+        let data = self.data.clone();
+        Self {
+            parent,
+            children,
+            data,
+        }
+    }
+}
+
 //ip Node
-impl<T> Node<T> {
+impl<T> Node<T>
+where
+    T: std::fmt::Debug,
+{
     //fp new
     /// Create a new node in the hierarchy
     pub fn new(data: T, parent: Option<usize>) -> Self {
@@ -85,7 +109,11 @@ impl<T> Node<T> {
 //tp Hierarchy
 /// A hierarchy of nodes, each of which has a data of the type of the
 /// tree
-pub struct Hierarchy<T> {
+#[derive(Debug)]
+pub struct Hierarchy<T>
+where
+    T: std::fmt::Debug,
+{
     /// The elements in the hierarchy
     elements: Vec<Node<T>>,
     /// The roots in the hierarchy - more than one tree can be stored
@@ -93,8 +121,23 @@ pub struct Hierarchy<T> {
     roots: Vec<usize>,
 }
 
+//ip Clone for Hierarchy<T:Clone>
+impl<T> Clone for Hierarchy<T>
+where
+    T: Clone + std::fmt::Debug,
+{
+    fn clone(&self) -> Self {
+        let elements = self.elements.clone();
+        let roots = self.roots.clone();
+        Self { elements, roots }
+    }
+}
+
 //ip Hierarchy
-impl<T> Hierarchy<T> {
+impl<T> Hierarchy<T>
+where
+    T: std::fmt::Debug,
+{
     //fp new
     /// Create a new hierarchy
     pub fn new() -> Self {
@@ -172,12 +215,20 @@ impl<T> Hierarchy<T> {
         &self.elements
     }
 
+    //mp take_elements
+    /// Take the elements as a vec
+    pub fn take_elements(self) -> Vec<T> {
+        self.elements.into_iter().map(|n| n.data).collect()
+    }
+
     //zz All done
 }
 
 //ip IndentedDisplay for Hierarchy
-impl<'a, Opt: IndentedOptions<'a>, T: IndentedDisplay<'a, Opt>> IndentedDisplay<'a, Opt>
-    for Hierarchy<T>
+impl<'a, Opt, T> IndentedDisplay<'a, Opt> for Hierarchy<T>
+where
+    Opt: IndentedOptions<'a>,
+    T: std::fmt::Debug + IndentedDisplay<'a, Opt>,
 {
     //mp fmt
     /// Display for humans with indent
@@ -187,6 +238,7 @@ impl<'a, Opt: IndentedOptions<'a>, T: IndentedDisplay<'a, Opt>> IndentedDisplay<
         for (i, e) in self.elements.iter().enumerate() {
             if !e.has_parent() {
                 for x in self.enum_from(i) {
+                    #[allow(unreachable_patterns)]
                     match x {
                         NodeEnumOp::Push(x, _) => {
                             self.elements[x].data.indent(&mut sub)?;
@@ -242,6 +294,7 @@ impl<T> NodeEnumOp<T> {
 /// The recipe is a [Vec] of [NodeEnumOp]s which describe entirely how
 /// to traverse the hierarchy; essentially it is a record of an
 /// enumeration of a hierarchy or part of a hierarchy
+#[derive(Debug)]
 pub struct Recipe {
     /// The [NodeEnumOp]s that make up the traversal
     ops: Vec<NodeEnumOp<usize>>,
@@ -304,7 +357,10 @@ impl Recipe {
 
     //mp of_ops
     /// Create a recipe from a [NodeNum] iterator
-    pub fn of_ops<T>(iter: NodeEnum<T>) -> Self {
+    pub fn of_ops<T>(iter: NodeEnum<T>) -> Self
+    where
+        T: std::fmt::Debug,
+    {
         let mut r = Self::new();
         for op in iter {
             r.add_op(op);
@@ -352,7 +408,10 @@ enum NodeEnumState {
 ///    Pop(F)
 ///    Pop(E)
 ///    Pop(A)
-pub struct NodeEnum<'a, T> {
+pub struct NodeEnum<'a, T>
+where
+    T: std::fmt::Debug,
+{
     /// Hierarchy of nodes that is being iterated over
     pub hierarchy: &'a [Node<T>],
     /// Stack of indices in to the hierarchy and whether the node at that point has been handled
@@ -360,7 +419,10 @@ pub struct NodeEnum<'a, T> {
 }
 
 //ip NodeEnum
-impl<'a, T> NodeEnum<'a, T> {
+impl<'a, T> NodeEnum<'a, T>
+where
+    T: std::fmt::Debug,
+{
     //fp new
     /// Create a new hierarchy node iterator
     pub fn new(hierarchy: &'a [Node<T>], root: usize) -> Self {
@@ -371,7 +433,10 @@ impl<'a, T> NodeEnum<'a, T> {
 }
 
 //ip Iterator for NodeEnum
-impl<'a, T> Iterator for NodeEnum<'a, T> {
+impl<'a, T> Iterator for NodeEnum<'a, T>
+where
+    T: std::fmt::Debug,
+{
     type Item = NodeEnumOp<usize>;
     fn next(&mut self) -> Option<Self::Item> {
         if self.stack.len() == 0 {
@@ -417,12 +482,18 @@ impl<'a, T> Iterator for NodeEnum<'a, T> {
 //ip NodeIter
 /// An iterator over part of a [Hierarchy] that returns a reference to
 /// the node as it traverses
-pub struct NodeIter<'a, T> {
+pub struct NodeIter<'a, T>
+where
+    T: std::fmt::Debug,
+{
     node_enum: NodeEnum<'a, T>,
 }
 
 //ip NodeIter
-impl<'a, T> NodeIter<'a, T> {
+impl<'a, T> NodeIter<'a, T>
+where
+    T: std::fmt::Debug,
+{
     //fp new
     /// Create a new hierarchy node iterator
     pub fn new(hierarchy: &'a [Node<T>], root: usize) -> Self {
@@ -433,7 +504,10 @@ impl<'a, T> NodeIter<'a, T> {
 }
 
 //ip Iterator for NodeIter
-impl<'a, T> Iterator for NodeIter<'a, T> {
+impl<'a, T> Iterator for NodeIter<'a, T>
+where
+    T: std::fmt::Debug,
+{
     type Item = NodeEnumOp<(usize, &'a T)>;
     fn next(&mut self) -> Option<Self::Item> {
         match self.node_enum.next() {

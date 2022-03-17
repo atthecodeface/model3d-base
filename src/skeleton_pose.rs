@@ -20,7 +20,7 @@ limitations under the License.
 use indent_display::{IndentedDisplay, IndentedOptions, Indenter};
 
 use crate::hierarchy;
-use crate::{Mat4, Skeleton, BonePose};
+use crate::{BonePose, Mat4, Skeleton};
 
 //a SkeletonPose
 //tp SkeletonPose
@@ -30,34 +30,39 @@ use crate::{Mat4, Skeleton, BonePose};
 /// mesh-space to animated-model-space
 pub struct SkeletonPose<'a> {
     /// The Skeleton the pose corresponds to
-    skeleton        : &'a Skeleton,
+    skeleton: &'a Skeleton,
     /// A pose for every [Bone] in the [Skeleton]
-    poses        : Vec<BonePose<'a>>,
+    poses: Vec<BonePose<'a>>,
     /// A mesh-to-animated-model-space matrix transformation for each
     /// bone
-    data         : Vec<Mat4>,
+    data: Vec<Mat4>,
     /// A monotonic counter to allow updating of the matrices once per
     /// animation tick
-    last_updated : usize,
+    last_updated: usize,
 }
 
 //ip SkeletonPose
-impl <'a> SkeletonPose<'a> {
+impl<'a> SkeletonPose<'a> {
     //fp new
     /// Create a new [SkeletonPose] for a [Skeleton]
     ///
     /// The [Skeleton] must have been resolved
-    pub fn new(skeleton:&'a Skeleton) -> Self {
+    pub fn new(skeleton: &'a Skeleton) -> Self {
         let mut poses = Vec::new();
         for b in skeleton.skeleton.borrow_elements().iter() {
-            poses.push( BonePose::new(&b.data) );
+            poses.push(BonePose::new(&b.data));
         }
         let mut data = Vec::new();
         for _ in 0..skeleton.max_index {
-            data.push([0.;16]);
+            data.push([0.; 16]);
         }
         let last_updated = 0;
-        Self { skeleton, poses, data, last_updated }
+        Self {
+            skeleton,
+            poses,
+            data,
+            last_updated,
+        }
     }
 
     //fp derive_animation
@@ -69,14 +74,16 @@ impl <'a> SkeletonPose<'a> {
         for (_, recipe) in &self.skeleton.roots {
             for op in recipe.borrow_ops() {
                 match op {
-                    hierarchy::NodeEnumOp::Push(n,_) => {
+                    hierarchy::NodeEnumOp::Push(n, _) => {
                         if mat_depth == 0 {
-                            self.data[mat_depth]   = *self.poses[*n].derive_animation(true, &self.data[mat_depth]);
+                            self.data[mat_depth] =
+                                *self.poses[*n].derive_animation(true, &self.data[mat_depth]);
                         } else {
-                            self.data[mat_depth+1] = *self.poses[*n].derive_animation(false, &self.data[mat_depth]);
+                            self.data[mat_depth + 1] =
+                                *self.poses[*n].derive_animation(false, &self.data[mat_depth]);
                         }
                         mat_depth += 1;
-                    },
+                    }
                     _ => {
                         mat_depth -= 1;
                     }
@@ -88,7 +95,7 @@ impl <'a> SkeletonPose<'a> {
     //fp update
     /// Update the animation matrices if required - depending on the
     /// last updated tick
-    pub fn update(&mut self, tick:usize) {
+    pub fn update(&mut self, tick: usize) {
         if tick != self.last_updated {
             self.last_updated = tick;
             self.derive_animation();
@@ -102,9 +109,7 @@ impl <'a> SkeletonPose<'a> {
 }
 
 //ip IndentedDisplay for SkeletonPose
-impl<'a, 'b, Opt: IndentedOptions<'a>> IndentedDisplay<'a, Opt>
-    for SkeletonPose<'b>
-{
+impl<'a, 'b, Opt: IndentedOptions<'a>> IndentedDisplay<'a, Opt> for SkeletonPose<'b> {
     //mp fmt
     /// Display for humans with indent
     fn indent(&self, f: &mut Indenter<'a, Opt>) -> std::fmt::Result {
@@ -112,9 +117,9 @@ impl<'a, 'b, Opt: IndentedOptions<'a>> IndentedDisplay<'a, Opt>
             let mut sub = f.sub();
             for op in recipe.borrow_ops() {
                 match op {
-                    hierarchy::NodeEnumOp::Push(n,_) => {
+                    hierarchy::NodeEnumOp::Push(_n, _) => {
                         sub = sub.sub();
-                    },
+                    }
                     _ => {
                         sub = sub.pop();
                     }
@@ -126,22 +131,22 @@ impl<'a, 'b, Opt: IndentedOptions<'a>> IndentedDisplay<'a, Opt>
 }
 
 /*
-        pass
-    #f hier_debug
-    def hier_debug(self, hier:Hierarchy) -> Hierarchy:
-        hier.add(f"SkeletonPose {self.skeleton.roots} {self.max_index} {self.last_updated} {self.data}")
-        hier.push()
-        self.skeleton.hier_debug(hier)
-        for pose in self.poses:
-            pose.hier_debug(hier)
-            pass
-        hier.pop()
-        return hier
-    #f All done
-    pass
- */
+       pass
+   #f hier_debug
+   def hier_debug(self, hier:Hierarchy) -> Hierarchy:
+       hier.add(f"SkeletonPose {self.skeleton.roots} {self.max_index} {self.last_updated} {self.data}")
+       hier.push()
+       self.skeleton.hier_debug(hier)
+       for pose in self.poses:
+           pose.hier_debug(hier)
+           pass
+       hier.pop()
+       return hier
+   #f All done
+   pass
+*/
 
-        /*
+/*
 #c AnimatedBonePose
 class AnimatedBonePose:
     def __init__(self, poses:List[BonePose]) -> None:

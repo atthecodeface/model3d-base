@@ -21,16 +21,19 @@ limitations under the License.
 //
 
 //a Imports
-use crate::{Mat4, Transformation, SkeletonPose, Instantiable};
+use crate::{Mat4, Transformation, SkeletonPose, Instantiable, Renderable};
 
 //a Instance
 //tp Instance
 /// A drawable::Instance contains the instance data for an instance of a drawable::Instantiable
 ///
 /// It requires a base transformation, an array of BonePose (which matches the Instantiable's BoneSet array), and an array of Mat4 for each bone in the BonePose array.
-pub struct Instance<'a> {
+pub struct Instance<'a, R>
+where
+    R: Renderable,
+{
     /// Reference to the Instantiable
-    instantiable : &'a Instantiable,
+    instantiable : &'a Instantiable<R>,
     /// The transformation to apply to this model instance
     pub transformation : Transformation,
     /// Matrix for the transformation (must be updated after updating Transformation),
@@ -41,7 +44,10 @@ pub struct Instance<'a> {
     pub bone_matrices   : Vec<Mat4>,
 }
 
-impl <'a> Instance<'a> {
+impl <'a, R> Instance<'a, R>
+where
+    R: Renderable,
+{
     //fp new
     /// Create a new [Instance] from an [Instantiable]
     ///
@@ -50,7 +56,7 @@ impl <'a> Instance<'a> {
     /// drawing the meshes within the [Instantiable]
     ///
     /// It should contain appropriate Materials too
-    pub fn new(instantiable:&'a Instantiable, num_bone_matrices:usize) -> Self {
+    pub fn new(instantiable:&'a Instantiable<R>, num_bone_matrices:usize) -> Self {
         let transformation = Transformation::new();
         let trans_mat = [0.;16];
         let bone_poses = Vec::new();

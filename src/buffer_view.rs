@@ -21,51 +21,87 @@ limitations under the License.
 //
 
 //a Imports
-use crate::{BufferElementType, BufferData, BufferClient};
+use std::cell::RefCell;
+
+use crate::{ViewClient, BufferData, BufferElementType, Renderable};
 
 //a BufferView
+//tp BufferView
 /// A subset of a `BufferData`, used for vertex attributes;
 /// hence for use in a vertex attribute pointer.
 ///
 /// A `BufferView` is used for a single attribute of a set of data, such as
 /// Position or Normal.
 #[derive(Debug)]
-pub struct BufferView<'a, T:BufferClient> {
+pub struct BufferView<'a, R: Renderable + ?Sized> {
     /// The `BufferData` that contains the actual vertex attribute data
-    pub data: &'a BufferData<'a, T>,
+    pub data: &'a BufferData<'a, R>,
     /// Number of elements per vertex - 1 to 4
     pub count: u32,
     /// The type of each element
-    pub ele_type : BufferElementType,
+    ///
+    /// For indices this must be Int8, Int16 or Int32
+    pub ele_type: BufferElementType,
     /// Offset from start of buffer to first byte of data
-    pub offset : u32,
+    pub offset: u32,
     /// Stride of data in the buffer - 0 for count*sizeof(ele_type)
-    pub stride : u32,
+    pub stride: u32,
+    /// The client bound to data[byte_offset] .. + byte_length
+    ///
+    /// This must be held as a [RefCell] as the [BufferData] is
+    /// created early in the process, prior to any `BufferView`s using
+    /// it - which then have shared references to the daata - but the
+    /// client is created afterwards
+    rc_client: RefCell<R::View>,
 }
 
 //ip BufferView
-impl<'a, T:BufferClient> BufferView<'a, T> {
+impl<'a, R: Renderable> BufferView<'a, R> {
     //fp new
     /// Create a new view of a `BufferData`
-    pub fn new(data:&'a BufferData<'a, T>, count:u32, ele_type:BufferElementType, offset:u32, stride:u32) -> Self {
-        Self { data, count, ele_type, offset, stride }
+    pub fn new(
+        data: &'a BufferData<'a, R>,
+        count: u32,
+        ele_type: BufferElementType,
+        offset: u32,
+        stride: u32,
+    ) -> Self {
+        let rc_client = RefCell::new(R::View::default());
+        Self {
+            data,
+            count,
+            ele_type,
+            offset,
+            stride,
+            rc_client,
+        }
     }
 
     //mp create_client
-    /// Create the OpenGL buffer required by the BufferView
-    pub fn create_client(&self) {
-        self.data.create_client(0)
+    /// Create the render buffer required by the BufferView
+    pub fn create_client(&self, is_indices:bool, render_context: &mut R::Context) {
+        self.rc_client.borrow_mut().create(self, is_indices, render_context);
+    }
+
+    //ap borrow_client
+    /// Borrow the client
+    pub fn borrow_client(&self) -> std::cell::Ref<R::View> {
+        self.rc_client.borrow()
     }
 
     //zz All done
 }
 
 //ip Display for BufferView
-impl <'a, T:BufferClient> std::fmt::Display for BufferView<'a, T> {
-    fn fmt(&self, f:&mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        write!(f,"BufferView[{:?}#{}]\n  {}+{}+n*{}\n", self.ele_type, self.count, self.data, self.offset,self.stride)
+impl<'a, R: Renderable> std::fmt::Display for BufferView<'a, R> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        write!(
+            f,
+            "BufferView[{:?}#{}]\n  {}+{}+n*{}\n",
+            self.ele_type, self.count, self.data, self.offset, self.stride
+        )
     }
 }
 
 //ip DefaultIndentedDisplay for BufferView
-impl <'a, T:BufferClient> indent_display::DefaultIndentedDisplay for BufferView<'a, T> {}
+impl<'a, R: Renderable> indent_display::DefaultIndentedDisplay for BufferView<'a, R> {}
