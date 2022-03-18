@@ -36,15 +36,17 @@ use crate::{ViewClient, BufferData, BufferElementType, Renderable};
 pub struct BufferView<'a, R: Renderable + ?Sized> {
     /// The `BufferData` that contains the actual vertex attribute data
     pub data: &'a BufferData<'a, R>,
-    /// Number of elements per vertex - 1 to 4
+    /// For attributes: number of elements per vertex (1 to 4)
+    /// For indices: number of indices in the buffer
     pub count: u32,
     /// The type of each element
     ///
     /// For indices this must be Int8, Int16 or Int32
     pub ele_type: BufferElementType,
     /// Offset from start of buffer to first byte of data
-    pub offset: u32,
+    pub byte_offset: u32,
     /// Stride of data in the buffer - 0 for count*sizeof(ele_type)
+    /// Unused for indices
     pub stride: u32,
     /// The client bound to data[byte_offset] .. + byte_length
     ///
@@ -61,17 +63,17 @@ impl<'a, R: Renderable> BufferView<'a, R> {
     /// Create a new view of a `BufferData`
     pub fn new(
         data: &'a BufferData<'a, R>,
-        count: u32,
+        count: u32, // count is number of ele_type in an attribute
         ele_type: BufferElementType,
-        offset: u32,
-        stride: u32,
+        byte_offset: u32, // offset in bytes?
+        stride: u32, // stride between elements (0->count*sizeof(ele_type))
     ) -> Self {
         let rc_client = RefCell::new(R::View::default());
         Self {
             data,
             count,
             ele_type,
-            offset,
+            byte_offset,
             stride,
             rc_client,
         }
@@ -98,7 +100,7 @@ impl<'a, R: Renderable> std::fmt::Display for BufferView<'a, R> {
         write!(
             f,
             "BufferView[{:?}#{}]\n  {}+{}+n*{}\n",
-            self.ele_type, self.count, self.data, self.offset, self.stride
+            self.ele_type, self.count, self.data, self.byte_offset, self.stride
         )
     }
 }

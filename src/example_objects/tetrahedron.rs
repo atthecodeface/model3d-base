@@ -1,0 +1,59 @@
+//a Documentation
+/*!
+
+This provides a function to create [ExampleVertices] object that is a triangle of a specified size at z=0
+
+ */
+
+//a Imports
+use super::ExampleVertices;
+use crate::{BufferElementType, Renderable, Mesh, Primitive, VertexAttr, PrimitiveType};
+
+/// Create a new [Vertices] object with a tetrahedron at z=0.
+///
+/// This has four vertices with a normal at each that is directed away
+/// from the centroid
+///
+/// The height is sqrt(2)/sqrt(3) * side length
+/// The centroid is 1/4 of the way up = 1/sqrt(24)
+/// sqrt(1-centroid^2) = sqrt(23/24)
+///
+/// Each equilateral triangle face has three sides of length size
+///
+/// The height of the triangles is size * sqrt(3)/2
+/// The centroid of these triangles is at 1/3 of the height
+///
+/// The X tip (Y=0, Z=0) is then at 2/3 * sqrt(3)/2 * size = size / sqrt(3)
+/// The other tips at Z=0 are then at
+///  X = -1/3 * sqrt(3)/2 * size = -size / (2*sqrt(3))
+///  Y = +- size/2
+pub fn new<'a, R: Renderable>(eg: &mut ExampleVertices<'a, R>, size: f32) {
+    let height = (2.0_f32 / 3.0).sqrt();
+    let centroid = height / 4.0;
+    let r3_2 = (3.0_f32).sqrt() * 0.5;
+    let s = 1.0/(3.0_f32).sqrt();
+    let x = (23.0_f32 / 24.0).sqrt();
+    let vertex_data = [
+        size*2.0*s, 0., 0.        , x,  0., -centroid,
+        -size*s, size*0.5, 0.     , -x*0.5, x*r3_2, -centroid,
+        -size*s, -size*0.5, 0.    , -x*0.5, -x*r3_2, -centroid,
+        0., 0., size * height     , 0., 0., 1.,
+    ];
+    let index_data = [0u8, 1, 2, 3, 0, 1,];
+
+    let indices = eg.push_data(Box::pin(index_data));
+    let vertices = eg.push_data(Box::pin(vertex_data));
+
+    let indices = eg.push_view(indices, 6, BufferElementType::Int8, 0, 0);
+    let vertices = eg.push_view(vertices, 3, BufferElementType::Float32, 0, 6*4);
+    let normals = eg.push_view(vertices, 3, BufferElementType::Float32, 3*4, 6*4);
+
+    // Create set of data (indices, vertex data) to by subset into by the meshes and their primitives
+    eg.push_vertices(indices, vertices, &[(VertexAttr::Normal, normals)]);
+}
+
+pub fn mesh(v_id:usize, m_id:usize) -> Mesh {
+    let mut mesh = Mesh::new();
+    mesh.add_primitive(Primitive::new(PrimitiveType::TriangleStrip, v_id, 0, 6, m_id));
+    mesh
+}

@@ -68,6 +68,11 @@ impl<'vertices, R: Renderable> Vertices<'vertices, R> {
         }
     }
 
+    //mp add_attr
+    pub fn add_attr(&mut self, attr:VertexAttr, view:&'vertices  BufferView<'vertices, R>) {
+        self.attrs.push( (attr, view) );
+    }
+    
     //mp borrow_indices
     /// Borrow the indices [BufferView]
     pub fn borrow_indices<'a>(&'a self) -> &'a BufferView<'vertices, R> {
@@ -102,6 +107,9 @@ impl<'vertices, R: Renderable> Vertices<'vertices, R> {
     pub fn create_client(&self, render_context: &mut R::Context) {
         self.indices.create_client(true, render_context);
         self.position.create_client(false, render_context);
+        for (attr, view) in self.iter_attrs() {
+            view.create_client(false, render_context);
+        }
         *(self.rc_client.borrow_mut()) = R::Vertices::create(self, render_context);
     }
 

@@ -2,7 +2,7 @@
 use std::pin::Pin;
 // use std::ops::Deref;
 
-use crate::{BufferData, BufferElementType, BufferView, ByteBuffer, Renderable, Vertices};
+use crate::{BufferData, BufferElementType, BufferView, ByteBuffer, Renderable, VertexAttr, Vertices};
 
 //a ExampleVertices
 //tp ExampleVertices
@@ -56,20 +56,24 @@ impl<'a, R: Renderable> ExampleVertices<'a, R> {
         num: u32,
         et: BufferElementType,
         ofs: u32,
-        length: u32,
+        stride: u32,
     ) -> usize {
         let n = self.views.len();
         let d = unsafe {
             std::mem::transmute::<&BufferData<'_, R>, &'a BufferData<'a, R>>(&self.data[data])
         };
-        let view = Box::pin(BufferView::new(d, num, et, ofs, length));
+        let view = Box::pin(BufferView::new(d, num, et, ofs, stride));
         self.views.push(view);
         n
     }
 
     //fp push_vertices
     /// Create a new [Vertices] using a set of indices and positions
-    pub fn push_vertices(&mut self, indices: usize, positions: usize) -> usize {
+    ///
+    /// This extends the life of the BufferView to that of the ExampleVertices
+    ///
+    /// This is safe as the BufferView's are in the Vec for ExampleVertices
+    pub fn push_vertices(&mut self, indices: usize, positions: usize, attrs:&[(VertexAttr, usize)]) -> usize {
         let n = self.vertices.len();
         let i = unsafe {
             std::mem::transmute::<&BufferView<'_, R>, &'a BufferView<'a, R>>(&self.views[indices])
@@ -77,7 +81,13 @@ impl<'a, R: Renderable> ExampleVertices<'a, R> {
         let v = unsafe {
             std::mem::transmute::<&BufferView<'_, R>, &'a BufferView<'a, R>>(&self.views[positions])
         };
-        let vertices = Vertices::new(i, v);
+        let mut vertices = Vertices::new(i, v);
+        for (attr, view_id) in attrs {
+            let v = unsafe {
+                std::mem::transmute::<&BufferView<'_, R>, &'a BufferView<'a, R>>(&self.views[*view_id])
+            };
+            vertices.add_attr(*attr, v);
+        }
         self.vertices.push(vertices);
         n
     }
