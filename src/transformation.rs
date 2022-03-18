@@ -91,6 +91,12 @@ impl Transformation {
         // # self.translation = q * self.translation # type: ignore
     }
 
+    //mp rotate_by
+    /// Rotate the transformation by an angle about an axis
+    pub fn rotate_by(&mut self, quaternion:&Quat) {
+        self.rotation = quat::multiply(quaternion, &self.rotation);
+    }
+
     //mp mat4
     /// Create a mat4 from the Transformation
     pub fn mat4(&self) -> Mat4 {
