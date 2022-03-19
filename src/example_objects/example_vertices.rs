@@ -22,17 +22,17 @@ impl<'a, R: Renderable> ExampleVertices<'a, R> {
     /// Create a new [ExampleVertices]
     ///
     /// This should probably not be Pin<Box<>>
-    pub fn new() -> Pin<Box<Self>> {
+    pub fn new() -> Self {
         let buffers = Vec::new();
         let data = Vec::new();
         let views = Vec::new();
         let vertices = Vec::new();
-        Box::pin(Self {
+        Self {
             buffers,
             data,
             views,
             vertices,
-        })
+        }
     }
 
     //fp push_data

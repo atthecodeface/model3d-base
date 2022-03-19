@@ -22,12 +22,12 @@ pub fn new<'a, R: Renderable>(eg: &mut ExampleVertices<'a, R>, size: f32) {
     ];
     let index_data = [0u8, 1, 2];
 
-    let indices = eg.push_data(Box::pin(index_data));
-    let vertices = eg.push_data(Box::pin(vertex_data));
+    let data_indices = eg.push_data(Box::pin(index_data));
+    let data_vertices = eg.push_data(Box::pin(vertex_data));
 
-    let indices = eg.push_view(indices, 3, BufferElementType::Int8, 0, 0);
-    let vertices = eg.push_view(vertices, 3, BufferElementType::Float32, 0, 0);
-    let normals = eg.push_view(vertices, 3, BufferElementType::Float32, 9*4, 0);
+    let indices = eg.push_view(data_indices, 3, BufferElementType::Int8, 0, 0);
+    let vertices = eg.push_view(data_vertices, 3, BufferElementType::Float32, 0, 0);
+    let normals = eg.push_view(data_vertices, 3, BufferElementType::Float32, 9*4, 0);
 
     // Create set of data (indices, vertex data) to by subset into by the meshes and their primitives
     eg.push_vertices(indices, vertices, &[(VertexAttr::Normal, normals)]);
