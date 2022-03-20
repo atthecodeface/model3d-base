@@ -22,13 +22,15 @@ use geo_nd::matrix;
 use crate::Bone;
 use crate::{Mat4, Transformation};
 
-//a Pose
-//tp Pose
+//a BonePose
+//tp BonePose
 /// A pose of a [Bone], referring to it so that many poses can use the
 /// same [Bone].
 ///
-/// A [Pose] has a current [Transformation] which indicates how it is
-/// posed; the [Bone] contains mapping matrices for going from bone-parent space to bone space, and for going from mesh space to bone space
+/// A [BonePose] has a current [Transformation] which indicates how it
+/// is posed; the [Bone] contains mapping matrices for going from
+/// bone-parent space to bone space, and for going from mesh space to
+/// bone space
 pub struct BonePose<'a> {
     /// The bone this corresponds to (within its hierarchy)
     bone: &'a Bone,
@@ -41,6 +43,8 @@ pub struct BonePose<'a> {
     /// Matrix mapping mesh-space to mesh-space
     animated_mtm: Mat4,
 }
+
+//ip BonePose
 impl<'a> BonePose<'a> {
     //fp new
     /// Create a new pose of a bone

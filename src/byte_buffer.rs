@@ -38,7 +38,7 @@ pub trait ByteBuffer {
 }
 
 //ti ByteBuffer for [T; N]
-/// Implement ByteBuffer for [T]
+/// Implement ByteBuffer for slice of T
 impl<T, const N: usize> ByteBuffer for [T; N] {
     //fp byte_length
     fn byte_length(&self) -> usize {

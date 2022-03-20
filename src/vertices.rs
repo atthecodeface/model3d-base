@@ -24,7 +24,7 @@ use crate::{Renderable, VertexAttr};
 
 //a Vertices
 //tp Vertices
-/// A set of vertices using one or more [BufferData] through [BufferView]s.
+/// A set of vertices using one or more [crate::BufferData] through [BufferView]s.
 ///
 /// A number of [Vertices] is used by an `Object`, its components and their meshes; one is used for each primitive within a mesh for its elements.
 /// The actual elements will be sets of triangles (as stripes or
@@ -69,6 +69,11 @@ impl<'vertices, R: Renderable> Vertices<'vertices, R> {
     }
 
     //mp add_attr
+    /// Add a [BufferView] for a particular [VertexAttr]
+    ///
+    /// On creation the [Vertices] will have views for indices and
+    /// positions; this provides a means to add views for things such
+    /// as normal, tex coords, etc
     pub fn add_attr(&mut self, attr:VertexAttr, view:&'vertices  BufferView<'vertices, R>) {
         self.attrs.push( (attr, view) );
     }
@@ -105,10 +110,10 @@ impl<'vertices, R: Renderable> Vertices<'vertices, R> {
     //mp create_client
     /// Create the render buffer required by the BufferView
     pub fn create_client(&self, render_context: &mut R::Context) {
-        self.indices.create_client(true, render_context);
-        self.position.create_client(false, render_context);
+        self.indices.create_client(VertexAttr::Indices, render_context);
+        self.position.create_client(VertexAttr::Position, render_context);
         for (attr, view) in self.iter_attrs() {
-            view.create_client(false, render_context);
+            view.create_client(*attr, render_context);
         }
         *(self.rc_client.borrow_mut()) = R::Vertices::create(self, render_context);
     }

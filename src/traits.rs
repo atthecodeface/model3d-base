@@ -1,4 +1,4 @@
-use crate::{BufferData, BufferView, Vertices};
+use crate::{BufferData, BufferView, VertexAttr, Vertices};
 use crate::{MaterialAspect, MaterialBaseData};
 
 //a BufferClient
@@ -29,7 +29,7 @@ pub trait ViewClient<R: Renderable<View = Self> + ?Sized>:
     Sized + std::fmt::Display + std::fmt::Debug + std::default::Default
 {
     /// Create a client
-    fn create(&mut self, view: &BufferView<R>, is_indices:bool, render_context: &mut R::Context);
+    fn create(&mut self, view: &BufferView<R>, attr:VertexAttr, render_context: &mut R::Context);
 }
 
 //tt TextureClient

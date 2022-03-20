@@ -356,7 +356,7 @@ impl Recipe {
     }
 
     //mp of_ops
-    /// Create a recipe from a [NodeNum] iterator
+    /// Create a recipe from a [NodeEnum] iterator
     pub fn of_ops<T>(iter: NodeEnum<T>) -> Self
     where
         T: std::fmt::Debug,

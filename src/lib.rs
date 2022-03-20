@@ -18,15 +18,14 @@ limitations under the License.
 
 //a Documentation
 #![warn(missing_docs)]
-#![warn(missing_doc_code_examples)]
+#![warn(rustdoc::missing_doc_code_examples)]
 
 /*!
 # 3D Model library
 
 This library provides structures and functions to support simple and
-complex 3D objects in a
-reasonably performant system. It use cases include 3D modeling tools,
-games, and 3D user interfaces.
+complex 3D objects in a reasonably performant system. It use cases
+include 3D modeling tools, games, and 3D user interfaces.
 
 The object model is derived from the Khronos glTF 3D
 model/scene description (<https://github.com/KhronosGroup/glTF>),
@@ -34,36 +33,48 @@ without explicit support for animation or cameras.
 
 ## Buffers
 
-Underlying the data model is the ByteBuffer trait - any data that is
+Underlying the data model is the [ByteBuffer] trait - any data that is
 used for the models must support this trait, and implementations are
-provided for [_] and for Vec<>.
+provided for slice <> and for Vec<>.
 
 The base concept for model [BufferData] is a buffer that is borrowed
 and that has the [ByteBuffer] trait; the data internally may be
 floats, ints, etc, or combinations thereof - from which one creates
 [BufferView]s, or which it is itself used as model indices. A
-BufferView is a subset of the buffer, and a single buffer may have
-many views. A BufferView may, for example, be the vertex positions for
+[BufferView] is a subset of the buffer, and a single buffer may have
+many views. A [BufferView] may, for example, be the vertex positions for
 a set of models; it may be texture coordinates; and so on. The
 BufferData corresponds on the OpenGL side to an ARRAY_BUFFER or an
 ELEMENT_ARRAY_BUFFER; hence it expects to have a VBO associated with
 it.
 
-The BufferView here is closer to the glTF Accessor - it combines in
+Each [BufferData] has a related client element (a
+[Renderable::Buffer]) which is created when an [Object] has its
+client structures created; this may be an Rc of an OpenGL buffer, if
+the client is an OpenGL renderer.
+
+The [BufferView] here is closer to the glTF Accessor - it combines in
 essence the gltF Accessor and the glTF BufferView.
 
 A set of [BufferView]s are borrowed to describe [Vertices], each
-BufferView providing one piece of vertex information (such as position
-or notmal). A single BufferView may be used by more than one Vertices
-object. The [Vertices] object includes also a Data that provides the
-indices. The [Vertices] object should be considered to be a complete
-descriptor of a model or set of models within a single ByteBuffer. In
-OpenGL a Vertices object is bound with a shader description to create
-a VAO.
+[BufferView] providing one piece of vertex information (such as
+indices, position or normal). A single [BufferView] may be used by
+more than one [Vertices] object. The [Vertices] object should be
+considered to be a complete descriptor of a model or set of models
+within one or more [ByteBuffer]. In OpenGL a Vertices object becomes a
+set of OpenGL Buffers (and subsets thereof) and for a particular
+shader class it can be bound into a VAO.
+
+Each [BufferView] has a related client element (a
+[Renderable::View]) which is created when an [Object] has its
+client structures created; this may be the data indicating the subset
+of the [Renderable::Buffer] that the view refers to, or perhaps a
+client buffer of its own.
+
 
 ## Skeleton and posing
 
-A [Skeleton] consists of hierarchies of [Bones]. Each bone has a
+A [Skeleton] consists of hierarchies of [Bone]s. Each bone has a
 [Transformation], which is the maaping from the coordinate space of
 its parent to the coordinate space of the bone itself.
 
@@ -110,10 +121,10 @@ A [Material] has a make_renderable() method that makes it renderable?
 
 A [Vertices] object is a set of related [BufferView]s, with at least a
 view for indices and a view for vertex positions; it may have more
-views for additional attributes. It has lifetime is no longer than
-that of the [BufferData] from which the [BufferView]s are made.
+views for additional attributes. It has a lifetime that is no longer
+than that of the [BufferData] from which the [BufferView]s are made.
 
-A [RenderContext::Vertices] can be constructed from a [Vertices]; this
+A [Renderable::Vertices] can be constructed from a [Vertices]; this
 is a renderer-specific vertices instance that replaces the use of
 [BufferView]s with the underlying client types.
 
@@ -144,8 +155,8 @@ Note that a hierarchy of object [Component]s is implicitly
 `renderable` as it contains only indices, not actual references to
 [BufferView] data structures.
 
-A hierarchy of object [Component]s can be reduced to an
-[ObjectRenderRecipe]; this is an array of:
+A hierarchy of object [Component]s can be reduced to a
+[RenderRecipe]; this is an array of:
 
 * transformation matrix
 
@@ -170,7 +181,7 @@ A 3D model [Object] consists of:
 *  an array of [Vertices]; each of these is a set
 of indices within a [BufferData] and attribute [BufferView]s.
 
-*  an array of [Materials]
+*  an array of [Material]
 
 Such an object may have a plurality of render views created for it,
 for use with different visualizers (in OpenGL these could be different
@@ -190,33 +201,14 @@ A renderable [Object] can then be drawn by
 * Apply the node's Transformation
 
 * Render the node's [Primitive]s using the [Object]s material at the
-  correct index, with the [RenderableObjectClient] associated with the
+  correct index, with the [Instantiable] associated with the
   [Vertices] index of the mesh
-
-For efficiency of rendering the [Object] can have a
-[ObjectRenderRecipe] created; this is an array of:
-
-* transformation matrix
-
-* material index (in a [Primitive])
-
-* vertices index (in a [Primitive])
-
-* drawable element type (in a [Primitive])
-
-* index offset (in a [Primitive])
-
-* index count (in a [Primitive])
-
-This can be generated by the client using an iterator:
-
-get_iter() -> (recipe length, Iter<matrix, material index, vertices index, drawable element type, index offset, index count>
 
 ## Instantiated objects
 
 An instantiated object is created by instantiating an [Object].
 
-The instance has a [Transformation], a [SkeletonPose], and a set of
+The [Instance] has a [Transformation], a [SkeletonPose], and a set of
 [Material] overrides; the [Material] overrides are an array of
 optional materials.
 
@@ -284,9 +276,6 @@ shader using that shader::Instantiable's `gl_draw` method, which takes
 a reference to the Instance. This method then has access to all the
 matrices required for the mesh, for the posed bones, and so on.
 
-
-NOTE THAT THE LIFETIME STUFF ONLY WORKS IF WE ADD A 'PASS ON GL_BUFFER' TO THE BUFFER TYPES
-
 A Shader is created using standard OpenGL calls. It must have the ShaderClass trait.
 
 An instantiable model consists of abstract mesh data and poses of the
@@ -301,6 +290,27 @@ into this array. The Hierarchy is designed to be created, and then
 immutably interrogated - although the immutability refers to the
 *hierarchy* and the *node array*, not the contents of the nodes - the
 node content may be updated at will.
+
+# Examples
+
+use model3d::{BufferView, MaterialAspect};
+use model3d::example_client::Renderable;
+
+# To do
+
+Optimize primitive to fit within 32 bytes
+
+Make Buffer have a client 'reproduce me' element so that if it comes
+from a file that file could be reloaded if required. This would allow
+the GPU data for an instantiable to be dropped and reloaded, if the
+appropriate client code is written.  The Buffer would require this
+element at creation time so that its create client method could could
+capture it.
+
+Add a String to each component, and extract that for each root component in the hierarchy
+Maybe have an 'extract component by name' from object that creates an Instantiable (requires there to be no skeleton for now)
+
+Make only part of an instantiable be drawn (have a Vec of RenderRecipes, one per component in the root by default)
 
 !*/
 
@@ -362,3 +372,5 @@ pub use instance::Instance;
 
 pub mod example_objects;
 pub use example_objects::ExampleVertices;
+
+pub mod example_client;

@@ -32,8 +32,9 @@ pub struct Instance<'a, R>
 where
     R: Renderable,
 {
-    /// Reference to the Instantiable
-    instantiable : &'a Instantiable<R>,
+    /// Reference to the [Instantiable]
+    /// This is provided as the instance *depends* on the [Instantiable] although it does not use the data here
+    pub instantiable : &'a Instantiable<R>,
     /// The transformation to apply to this model instance
     pub transformation : Transformation,
     /// Matrix for the transformation (must be updated after updating Transformation),

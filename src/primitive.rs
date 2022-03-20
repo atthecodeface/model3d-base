@@ -26,7 +26,7 @@ use crate::PrimitiveType;
 ///
 /// This might be, for example, the arm of a robot.
 ///
-/// The [Primitive] depends on being in an 3D model object, as it is the
+/// The [Primitive] depends on being in an 3D model [crate::Object] (or its derived [crate::Instantiable], as it is the
 /// object that contains the actual materials and vertices to use
 ///
 /// This *SHOULD* be optimized to fit within half a cache line (32 bytes)
@@ -41,9 +41,9 @@ pub struct Primitive {
     index_offset: u32,
     /// Number of indices to use
     index_count: u32,
-    /// Material to be used in drawing - index within the [Object]
+    /// Material to be used in drawing - index within the [crate::Object]
     material_index: u16,
-    /// Vertices index within the [Object]
+    /// Vertices index within the [crate::Object]
     ///
     /// This provides (effectively) the set of attribute `BufferView`s that the mesh utilizes
     vertices_index: u16,
@@ -103,21 +103,28 @@ impl Primitive {
     }
 
     //mp vertices_index
+    /// Retrieve the index into the [crate::Object] vertices array that this
+    /// primitive uses
     pub fn vertices_index(&self) -> usize {
         self.vertices_index as usize
     }
 
     //mp material_index
+    /// Retrieve the index into the [crate::Object] materials array that this
+    /// primitive uses
     pub fn material_index(&self) -> usize {
         self.material_index as usize
     }
 
     //mp index_count
+    /// Get the number of indices required to draw this primitive
     pub fn index_count(&self) -> u32 {
         self.index_count
     }
 
     //mp byte_offset
+    /// Get the byte offset within the indices buffer view to the
+    /// first index used by this primitive
     pub fn byte_offset(&self) -> usize {
         self.index_offset as usize
     }

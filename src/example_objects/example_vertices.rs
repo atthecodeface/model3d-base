@@ -36,7 +36,7 @@ impl<'a, R: Renderable> ExampleVertices<'a, R> {
     }
 
     //fp push_data
-    /// Push a new [ByteByffer] implementation and return its index
+    /// Push a new [ByteBuffer] implementation and return its index
     pub fn push_data(&mut self, buffer: Pin<Box<dyn ByteBuffer>>) -> usize {
         let n = self.data.len();
         self.buffers.push(buffer);

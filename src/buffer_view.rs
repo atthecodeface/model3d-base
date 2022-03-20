@@ -23,7 +23,7 @@ limitations under the License.
 //a Imports
 use std::cell::RefCell;
 
-use crate::{ViewClient, BufferData, BufferElementType, Renderable};
+use crate::{ViewClient, BufferData, BufferElementType, VertexAttr, Renderable};
 
 //a BufferView
 //tp BufferView
@@ -48,7 +48,7 @@ pub struct BufferView<'a, R: Renderable + ?Sized> {
     /// Stride of data in the buffer - 0 for count*sizeof(ele_type)
     /// Unused for indices
     pub stride: u32,
-    /// The client bound to data[byte_offset] .. + byte_length
+    /// The client bound to data\[byte_offset\] .. + byte_length
     ///
     /// This must be held as a [RefCell] as the [BufferData] is
     /// created early in the process, prior to any `BufferView`s using
@@ -81,8 +81,8 @@ impl<'a, R: Renderable> BufferView<'a, R> {
 
     //mp create_client
     /// Create the render buffer required by the BufferView
-    pub fn create_client(&self, is_indices:bool, render_context: &mut R::Context) {
-        self.rc_client.borrow_mut().create(self, is_indices, render_context);
+    pub fn create_client(&self, attr:VertexAttr, render_context: &mut R::Context) {
+        self.rc_client.borrow_mut().create(self, attr, render_context);
     }
 
     //ap borrow_client

@@ -42,6 +42,8 @@ pub enum BufferElementType {
 /// additional attributes may or maynot be provided by a model
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VertexAttr {
+    /// Indices
+    Indices,
     /// Position (3xf32) of the point
     Position,
     /// Normal (3xf32) at the point
@@ -52,7 +54,7 @@ pub enum VertexAttr {
     Tangent,
     /// A set of joints (n x int)
     Joints,
-    /// Weights (n x f16?) to apply to each bone[joint[i]]
+    /// Weights (n x f16?) to apply to each bone\[joint\[i\]\]
     Weights,
     /// Texture coordinates (2 x f32)
     TexCoords0,

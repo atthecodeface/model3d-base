@@ -31,7 +31,7 @@ use crate::{BonePose, Mat4, Skeleton};
 pub struct SkeletonPose<'a> {
     /// The Skeleton the pose corresponds to
     skeleton: &'a Skeleton,
-    /// A pose for every [Bone] in the [Skeleton]
+    /// A pose for every [crate::Bone] in the [Skeleton]
     poses: Vec<BonePose<'a>>,
     /// A mesh-to-animated-model-space matrix transformation for each
     /// bone

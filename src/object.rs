@@ -19,7 +19,7 @@ limitations under the License.
 //a Imports
 use crate::hierarchy;
 use crate::Renderable;
-use crate::{Component, RenderRecipe, Material, Mesh, Skeleton, Transformation, Vertices, Instantiable};
+use crate::{Component, Material, Mesh, Skeleton, Transformation, Vertices, Instantiable};
 use hierarchy::Hierarchy;
 
 //a Object
@@ -116,16 +116,15 @@ where
     }
 
     //mp analyze
-    /// Analyze 
+    /// Analyze the object once it has been completely created
+    ///
+    /// This must be performed before clients are created, render
+    /// recipes are generated, or the object is deconnstructed into an
+    /// [Instantiable].
     pub fn analyze(
         &mut self,
     )  {
         self.components.find_roots();
-    }
-
-    //mp create_render_recipe
-    pub fn create_render_recipe(&self) -> RenderRecipe {
-        RenderRecipe::from_component_hierarchy(&self.components)
     }
 
     //mp create_client
@@ -137,6 +136,14 @@ where
     }
 
     //dp into_instantiable
+    /// Deconstruct the object into an [Instantiable] for the
+    /// renderable. This should be invoked after analysis and clients
+    /// have been created.
+    ///
+    /// This permits (for exampl in OpenGL) the CPU-side buffers in
+    /// the object to be dropped, but the GPU-side objects (created by
+    /// create_client) can be maintained. The [Instantiable] contains
+    /// only instances of the types for the [Renderable].
     pub fn into_instantiable(self) -> Instantiable<R> {
         Instantiable::new(self.skeleton,
                           self.vertices,
