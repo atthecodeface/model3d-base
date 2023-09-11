@@ -19,7 +19,7 @@ limitations under the License.
 //a Imports
 use crate::hierarchy;
 use crate::Renderable;
-use crate::{Component, Material, Mesh, Skeleton, Transformation, Vertices, Instantiable};
+use crate::{Component, Instantiable, Material, Mesh, Skeleton, Transformation, Vertices};
 use hierarchy::Hierarchy;
 
 //a Object
@@ -121,17 +121,15 @@ where
     /// This must be performed before clients are created, render
     /// recipes are generated, or the object is deconnstructed into an
     /// [Instantiable].
-    pub fn analyze(
-        &mut self,
-    )  {
+    pub fn analyze(&mut self) {
         self.components.find_roots();
     }
 
     //mp create_client
     /// Create the clients associated with the object - for vertices and materials
-    pub fn create_client(&self, render_context: &mut R::Context) {
+    pub fn create_client(&self, renderer: &mut R) {
         for v in &self.vertices {
-            v.create_client(render_context);
+            v.create_client(renderer);
         }
     }
 
@@ -145,12 +143,13 @@ where
     /// create_client) can be maintained. The [Instantiable] contains
     /// only instances of the types for the [Renderable].
     pub fn into_instantiable(self) -> Instantiable<R> {
-        Instantiable::new(self.skeleton,
-                          self.vertices,
-                          self.materials,
-                          self.components,
-                          )
+        Instantiable::new(
+            self.skeleton,
+            self.vertices,
+            self.materials,
+            self.components,
+        )
     }
-    
+
     //zz All done
 }

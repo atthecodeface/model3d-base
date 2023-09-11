@@ -17,7 +17,7 @@ limitations under the License.
  */
 
 //a Imports
-use std::cell::{RefCell, Ref};
+use std::cell::{Ref, RefCell};
 
 use crate::{BufferView, VerticesClient};
 use crate::{Renderable, VertexAttr};
@@ -74,10 +74,10 @@ impl<'vertices, R: Renderable> Vertices<'vertices, R> {
     /// On creation the [Vertices] will have views for indices and
     /// positions; this provides a means to add views for things such
     /// as normal, tex coords, etc
-    pub fn add_attr(&mut self, attr:VertexAttr, view:&'vertices  BufferView<'vertices, R>) {
-        self.attrs.push( (attr, view) );
+    pub fn add_attr(&mut self, attr: VertexAttr, view: &'vertices BufferView<'vertices, R>) {
+        self.attrs.push((attr, view));
     }
-    
+
     //mp borrow_indices
     /// Borrow the indices [BufferView]
     pub fn borrow_indices<'a>(&'a self) -> &'a BufferView<'vertices, R> {
@@ -109,13 +109,13 @@ impl<'vertices, R: Renderable> Vertices<'vertices, R> {
 
     //mp create_client
     /// Create the render buffer required by the BufferView
-    pub fn create_client(&self, render_context: &mut R::Context) {
-        self.indices.create_client(VertexAttr::Indices, render_context);
-        self.position.create_client(VertexAttr::Position, render_context);
+    pub fn create_client(&self, renderer: &mut R) {
+        self.indices.create_client(VertexAttr::Indices, renderer);
+        self.position.create_client(VertexAttr::Position, renderer);
         for (attr, view) in self.iter_attrs() {
-            view.create_client(*attr, render_context);
+            view.create_client(*attr, renderer);
         }
-        *(self.rc_client.borrow_mut()) = R::Vertices::create(self, render_context);
+        *(self.rc_client.borrow_mut()) = renderer.create_vertices_client(self);
     }
 
     //ap borrow_client

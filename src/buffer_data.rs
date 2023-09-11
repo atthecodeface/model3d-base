@@ -47,7 +47,7 @@ use crate::{BufferClient, ByteBuffer, Renderable};
 ///
 /// A client may have one copy of the data for all the primitives and models.
 #[derive(Debug)]
-pub struct BufferData<'a, R: Renderable + ?Sized> {
+pub struct BufferData<'a, R: Renderable> {
     /// Data buffer itself
     data: &'a [u8],
     /// Offset in to the data buffer for the first byte
@@ -91,8 +91,9 @@ impl<'a, R: Renderable> BufferData<'a, R> {
 
     //mp create_client
     /// Replace the client data with one of this data
-    pub fn create_client(&self, render_context: &mut R::Context) {
-        self.rc_client.borrow_mut().create(self, render_context);
+    pub fn create_client(&self, renderable: &mut R) {
+        use std::ops::DerefMut;
+        renderable.init_buffer_data_client(self.rc_client.borrow_mut().deref_mut(), self);
     }
 
     //ap borrow_client
@@ -105,6 +106,14 @@ impl<'a, R: Renderable> BufferData<'a, R> {
     /// Get a const u8 ptr to the data itself
     pub fn as_ptr(&self) -> *const u8 {
         unsafe { self.data.as_ptr().add(self.byte_offset as usize) }
+    }
+
+    //mp as_slice
+    /// Get the slice that is the data itself
+    pub fn as_slice(&self) -> &[u8] {
+        let start = self.byte_offset as usize;
+        let end = (self.byte_offset + self.byte_length) as usize;
+        self.data.get(start..end).unwrap()
     }
 
     //zz All done

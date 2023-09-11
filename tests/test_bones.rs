@@ -1,4 +1,4 @@
-use model3d::{Skeleton, Transformation};
+use model3d_base::{Skeleton, Transformation};
 
 fn build_bone_set() -> Skeleton {
     let mut skeleton = Skeleton::new();

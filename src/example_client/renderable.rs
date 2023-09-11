@@ -1,7 +1,10 @@
 //a Imports
 use std::rc::Rc;
 
-use crate::{BufferData, BufferClient, ViewClient, MaterialClient, TextureClient, VerticesClient, BufferView, Material, Renderable, VertexAttr, Vertices};
+use crate::{
+    BufferClient, BufferData, BufferView, Material, MaterialClient, Renderable, TextureClient,
+    VertexAttr, Vertices, VerticesClient, ViewClient,
+};
 
 //a Buffer
 //tp Buffer
@@ -29,19 +32,10 @@ impl Default for Buffer {
 }
 
 //ip BufferClient for Buffer
-impl BufferClient<Id> for Buffer {
-    fn create( &mut self, _data: &BufferData<Id>, _render_context: &mut usize) {
-        // No need to do anything; the 
-    }
-}
+impl BufferClient for Buffer {}
 
 //ip ViewClient for Buffer
-impl ViewClient<Id> for Buffer {
-    fn create( &mut self, view: &BufferView<Id>, _attr:VertexAttr, render_context: &mut usize) {
-        view.data.create_client(render_context);
-        *self = view.data.borrow_client().clone();
-    }
-}
+impl ViewClient for Buffer {}
 
 //a Id
 //tp Id
@@ -66,28 +60,40 @@ impl Default for Id {
 }
 
 //ip MaterialClient for Id
-impl MaterialClient<Id> for Id {
-    fn create(&mut self, _material: &dyn Material<Id>, _render_context: &mut usize) {}
-    fn drop(&mut self, _material: &dyn Material<Id>, _render_context: &mut usize) {}
-}
+impl MaterialClient for Id {}
 
 //ip TextureClient for Id
 impl TextureClient for Id {}
 
 //ip VerticesClient for Id
-impl VerticesClient<Id> for Id {
-    fn create(_vertices: &Vertices<Self>, _render_context: &mut usize) -> Self {
-        Self::default()
-    }
-}
+impl VerticesClient for Id {}
 
 //ip Renderable for Id
 impl Renderable for Id {
-    type Context = usize;
     type Buffer = Buffer;
     type View = Buffer;
     type Texture = Id;
     type Material = Id;
     type Vertices = Id;
+    fn init_buffer_data_client(&mut self, _buffer: &mut Buffer, _data: &BufferData<Self>) {
+        // No need to do anything; the
+    }
+    fn init_buffer_view_client(
+        &mut self,
+        client: &mut Self::View,
+        buffer_view: &BufferView<Self>,
+        attr: VertexAttr,
+    ) {
+        buffer_view.data.create_client(self);
+        *client = buffer_view.data.borrow_client().clone();
+    }
+    fn create_vertices_client(&mut self, _vertices: &Vertices<Self>) -> Self::Vertices {
+        Self::Vertices::default()
+    }
+    fn init_material_client(
+        &mut self,
+        _client: &mut Self::Material,
+        _material: &dyn Material<Self>,
+    ) {
+    }
 }
-

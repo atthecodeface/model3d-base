@@ -23,7 +23,7 @@ limitations under the License.
 //a Imports
 use std::cell::RefCell;
 
-use crate::{ViewClient, BufferData, BufferElementType, VertexAttr, Renderable};
+use crate::{BufferData, BufferElementType, Renderable, VertexAttr, ViewClient};
 
 //a BufferView
 //tp BufferView
@@ -66,7 +66,7 @@ impl<'a, R: Renderable> BufferView<'a, R> {
         count: u32, // count is number of ele_type in an attribute
         ele_type: BufferElementType,
         byte_offset: u32, // offset in bytes?
-        stride: u32, // stride between elements (0->count*sizeof(ele_type))
+        stride: u32,      // stride between elements (0->count*sizeof(ele_type))
     ) -> Self {
         let rc_client = RefCell::new(R::View::default());
         Self {
@@ -81,8 +81,9 @@ impl<'a, R: Renderable> BufferView<'a, R> {
 
     //mp create_client
     /// Create the render buffer required by the BufferView
-    pub fn create_client(&self, attr:VertexAttr, render_context: &mut R::Context) {
-        self.rc_client.borrow_mut().create(self, attr, render_context);
+    pub fn create_client(&self, attr: VertexAttr, renderable: &mut R) {
+        use std::ops::DerefMut;
+        renderable.init_buffer_view_client(self.rc_client.borrow_mut().deref_mut(), self, attr);
     }
 
     //ap borrow_client

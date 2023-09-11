@@ -9,11 +9,9 @@ use crate::{MaterialAspect, MaterialBaseData};
 ///
 /// The data may be created more than once with the same buffer; the client
 /// is responsible for deduplication within the render context if required
-pub trait BufferClient<R: Renderable<Buffer = Self> + ?Sized>:
-    Sized + std::fmt::Display + std::fmt::Debug + std::default::Default
+pub trait BufferClient:
+    Sized + std::fmt::Display + std::fmt::Debug + std::default::Default + Clone
 {
-    /// Create a client
-    fn create(&mut self, data: &BufferData<R>, render_context: &mut R::Context);
 }
 
 //tt ViewClient
@@ -25,26 +23,20 @@ pub trait BufferClient<R: Renderable<Buffer = Self> + ?Sized>:
 ///
 /// The data may be created more than once with the same buffer; the client
 /// is responsible for dedupliclation within the render context if required
-pub trait ViewClient<R: Renderable<View = Self> + ?Sized>:
-    Sized + std::fmt::Display + std::fmt::Debug + std::default::Default
+pub trait ViewClient:
+    Sized + std::fmt::Display + std::fmt::Debug + std::default::Default + Clone
 {
-    /// Create a client
-    fn create(&mut self, view: &BufferView<R>, attr:VertexAttr, render_context: &mut R::Context);
 }
 
 //tt TextureClient
 /// The trait that must be supported by a client texture
-pub trait TextureClient: Sized + std::fmt::Debug {}
+pub trait TextureClient: Sized + std::fmt::Debug + Clone {}
 
 //tt MaterialClient
 /// Trait supported by a material client
-pub trait MaterialClient<R: Renderable + ?Sized>:
-    Sized + std::fmt::Display + std::fmt::Debug + std::default::Default
+pub trait MaterialClient:
+    Sized + std::fmt::Display + std::fmt::Debug + std::default::Default + Clone
 {
-    /// Create a client for a reason - reason 0 is reserved
-    fn create(&mut self, material: &dyn Material<R>, render_context: &mut R::Context);
-    /// Destroy a client given a reason - reason 0 implies all
-    fn drop(&mut self, material: &dyn Material<R>, render_context: &mut R::Context);
 }
 
 //tt VerticesClient
@@ -52,13 +44,8 @@ pub trait MaterialClient<R: Renderable + ?Sized>:
 ///
 /// Clone is required as Vertices can be borrowed by more than one object, and an
 /// instantiable object contains the [VerticesClient] for the Vertices
-/// 
-pub trait VerticesClient<R: Renderable<Vertices = Self> + ?Sized>:
-Sized + std::fmt::Debug + std::default::Default + Clone
-{
-    /// Create a client
-    fn create(vertices: &Vertices<R>, render_context: &mut R::Context) -> Self;
-}
+///
+pub trait VerticesClient: Sized + std::fmt::Debug + std::default::Default + Clone {}
 
 //tt Renderable
 /// The [Renderable] trait must be implemented by a type that is a
@@ -67,19 +54,11 @@ Sized + std::fmt::Debug + std::default::Default + Clone
 /// within a OpenGL context, for example), and then its own structures
 /// that are used to hold [BufferData], textures, materials, and sets
 /// of renderable [Vertices].
-pub trait Renderable {
-    /// A context that is used in any call to a 'create' client method
-    ///
-    /// For renderers that may need to render the same object instance
-    /// with more than one render pipeline - and for each to have a
-    /// distinct [VerticesClient] entry - the context should be able
-    /// to contain an indicator (used during object.make_renderable)
-    /// of which render pipeline is being created
-    type Context;
+pub trait Renderable: Sized {
     /// The renderer's type that reflects a [BufferData]
-    type Buffer: BufferClient<Self>;
+    type Buffer: BufferClient;
     /// The renderer's type that reflects a [BufferView]
-    type View: ViewClient<Self>;
+    type View: ViewClient;
     /// The renderer's type that represents a texture; this is
     /// supplied to material creation, and hence is less a product of
     /// the renderer and more an input to the 3D model library
@@ -87,12 +66,31 @@ pub trait Renderable {
     /// The renderer's type that reflects a [Material]; this is expected
     /// to be an extraction of the aspects of a material that the
     /// renderer pipelines can apply.
-    type Material: MaterialClient<Self>;
+    type Material: MaterialClient;
     /// The renderer's type that reflects a [BufferView] of indices
     /// and the associated [BufferView]s of attributes supported by a
     /// particular pipeline within the renderer
-    type Vertices: VerticesClient<Self>;
+    type Vertices: VerticesClient;
     // type Instantiable : ;
+    /// Initialize a buffer data client - it will have been created using default()
+    fn init_buffer_data_client(
+        &mut self,
+        client: &mut Self::Buffer,
+        buffer_data: &BufferData<Self>,
+    );
+    /// Initialize a buffer view client
+    fn init_buffer_view_client(
+        &mut self,
+        client: &mut Self::View,
+        buffer_view: &BufferView<Self>,
+        attr: VertexAttr,
+    );
+    /// Create a client for a reason - reason 0 is reserved
+    fn init_material_client(&mut self, client: &mut Self::Material, material: &dyn Material<Self>);
+    // Destroy a client given a reason - reason 0 implies all
+    // fn drop_material_client(&mut self, material: &dyn Material<Self>, render_context: &mut Self::Context);
+    /// Create a client
+    fn create_vertices_client(&mut self, vertices: &Vertices<Self>) -> Self::Vertices;
 }
 
 //tt Material
@@ -102,7 +100,7 @@ pub trait Renderable {
 /// allows that information to be gathered from any kind of material
 pub trait Material<R: Renderable> {
     /// Invoked when an 3D model object is made renderable
-    fn create_renderable(&self, _render_context: &mut R::Context) {}
+    // fn create_renderable(&self, _render_context: &mut R::Context) {}
 
     /// Borrow the basic data of a material - color and base
     /// metallic/roughness, for example

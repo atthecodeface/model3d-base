@@ -1,9 +1,9 @@
 [package]
-name = "model3d"
-version = "0.1.0"
-edition = "2018"
+name = "model3d-base"
+version = "0.2.0"
+edition = "2021"
 
 [dependencies]
-geo-nd         = "0.1.0"
-indent-display = { path="../indent-display", version="0.1.1" }
+geo-nd         = "0.5"
+indent-display = "0.1.1"
 
