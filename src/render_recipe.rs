@@ -35,11 +35,11 @@ use crate::{Component, Primitive};
 #[derive(Debug)]
 pub struct RenderRecipe {
     /// Matrices to use (the first is the identity matrix)
-    pub matrices : Vec<Mat4>,
+    pub matrices: Vec<Mat4>,
     /// The primitives within the component
-    pub primitives : Vec<Primitive>,
+    pub primitives: Vec<Primitive>,
     /// Draw requirements - matrix index for the associated primitive index
-    pub matrix_for_primitives : Vec<usize>,
+    pub matrix_for_primitives: Vec<usize>,
 }
 
 //ip RenderRecipe
@@ -61,9 +61,7 @@ impl RenderRecipe {
     /// Build a RenderRecipe from a [Hierarchy] of [Component]
     ///
     /// It requires the hierarchy to have had 'find_roots' executed prior
-    pub fn from_component_hierarchy(
-        components: &Hierarchy<Component>,
-    ) -> Self {
+    pub fn from_component_hierarchy(components: &Hierarchy<Component>) -> Self {
         let mut recipe = Self::new();
 
         // Create matrices for all meshes in the component,
@@ -78,8 +76,10 @@ impl RenderRecipe {
                     NodeEnumOp::Push((n, comp), _has_children) => {
                         mesh_stack.push(trans_index);
                         if let Some(transformation) = comp.transformation {
-                            let transformation =
-                                matrix::multiply4(&recipe.matrices[trans_index], &transformation.mat4());
+                            let transformation = matrix::multiply4(
+                                &recipe.matrices[trans_index],
+                                &transformation.mat4(),
+                            );
                             trans_index = recipe.matrices.len();
                             recipe.matrices.push(transformation);
                         } // else keep same trans_index as its parent

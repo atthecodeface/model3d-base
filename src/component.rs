@@ -43,5 +43,4 @@ impl Component {
             mesh,
         }
     }
-
 }

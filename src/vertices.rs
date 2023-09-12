@@ -19,7 +19,7 @@ limitations under the License.
 //a Imports
 use std::cell::{Ref, RefCell};
 
-use crate::{BufferView, VerticesClient};
+use crate::BufferView;
 use crate::{Renderable, VertexAttr};
 
 //a Vertices

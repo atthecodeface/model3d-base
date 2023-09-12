@@ -23,7 +23,7 @@ limitations under the License.
 //a Imports
 use std::cell::RefCell;
 
-use crate::{BufferData, BufferElementType, Renderable, VertexAttr, ViewClient};
+use crate::{BufferData, BufferElementType, Renderable, VertexAttr};
 
 //a BufferView
 //tp BufferView

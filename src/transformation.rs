@@ -93,7 +93,7 @@ impl Transformation {
 
     //mp rotate_by
     /// Rotate the transformation by an angle about an axis
-    pub fn rotate_by(&mut self, quaternion:&Quat) {
+    pub fn rotate_by(&mut self, quaternion: &Quat) {
         self.rotation = quat::multiply(quaternion, &self.rotation);
     }
 

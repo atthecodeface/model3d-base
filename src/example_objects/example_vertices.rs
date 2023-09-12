@@ -2,7 +2,9 @@
 use std::pin::Pin;
 // use std::ops::Deref;
 
-use crate::{BufferData, BufferElementType, BufferView, ByteBuffer, Renderable, VertexAttr, Vertices};
+use crate::{
+    BufferData, BufferElementType, BufferView, ByteBuffer, Renderable, VertexAttr, Vertices,
+};
 
 //a ExampleVertices
 //tp ExampleVertices
@@ -73,7 +75,12 @@ impl<'a, R: Renderable> ExampleVertices<'a, R> {
     /// This extends the life of the BufferView to that of the ExampleVertices
     ///
     /// This is safe as the BufferView's are in the Vec for ExampleVertices
-    pub fn push_vertices(&mut self, indices: usize, positions: usize, attrs:&[(VertexAttr, usize)]) -> usize {
+    pub fn push_vertices(
+        &mut self,
+        indices: usize,
+        positions: usize,
+        attrs: &[(VertexAttr, usize)],
+    ) -> usize {
         let n = self.vertices.len();
         let i = unsafe {
             std::mem::transmute::<&BufferView<'_, R>, &'a BufferView<'a, R>>(&self.views[indices])
@@ -84,7 +91,9 @@ impl<'a, R: Renderable> ExampleVertices<'a, R> {
         let mut vertices = Vertices::new(i, v);
         for (attr, view_id) in attrs {
             let v = unsafe {
-                std::mem::transmute::<&BufferView<'_, R>, &'a BufferView<'a, R>>(&self.views[*view_id])
+                std::mem::transmute::<&BufferView<'_, R>, &'a BufferView<'a, R>>(
+                    &self.views[*view_id],
+                )
             };
             vertices.add_attr(*attr, v);
         }

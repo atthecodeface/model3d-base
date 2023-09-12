@@ -320,6 +320,10 @@ pub use types::MaterialAspect;
 pub use types::{Mat3, Mat4, Quat, Vec3, Vec4};
 pub use types::{PrimitiveType, VertexAttr};
 
+//a To do
+//
+// Add index size to primitive (it is cache-line sensitive though)
+
 //a Imports and exports
 pub mod hierarchy;
 
@@ -345,7 +349,7 @@ pub use byte_buffer::ByteBuffer;
 
 mod traits;
 pub use traits::{
-    BufferClient, ViewClient, Material, MaterialClient, Renderable, TextureClient, VerticesClient,
+    BufferClient, Material, MaterialClient, Renderable, TextureClient, VerticesClient, ViewClient,
 };
 mod material;
 pub use material::BaseData as MaterialBaseData;

@@ -21,7 +21,7 @@ limitations under the License.
 //
 
 //a Imports
-use crate::{Mat4, Transformation, SkeletonPose, Instantiable, Renderable};
+use crate::{Instantiable, Mat4, Renderable, SkeletonPose, Transformation};
 
 //a Instance
 //tp Instance
@@ -34,18 +34,18 @@ where
 {
     /// Reference to the [Instantiable]
     /// This is provided as the instance *depends* on the [Instantiable] although it does not use the data here
-    pub instantiable : &'a Instantiable<R>,
+    pub instantiable: &'a Instantiable<R>,
     /// The transformation to apply to this model instance
-    pub transformation : Transformation,
+    pub transformation: Transformation,
     /// Matrix for the transformation (must be updated after updating Transformation),
-    pub trans_mat : Mat4,
+    pub trans_mat: Mat4,
     /// The sets of BonePose corresponding to the BoneSet array in the Instantiable
-    pub bone_poses   : Vec<SkeletonPose<'a>>,
+    pub bone_poses: Vec<SkeletonPose<'a>>,
     /// Transformation matrices for the bones
-    pub bone_matrices   : Vec<Mat4>,
+    pub bone_matrices: Vec<Mat4>,
 }
 
-impl <'a, R> Instance<'a, R>
+impl<'a, R> Instance<'a, R>
 where
     R: Renderable,
 {
@@ -57,14 +57,20 @@ where
     /// drawing the meshes within the [Instantiable]
     ///
     /// It should contain appropriate Materials too
-    pub fn new(instantiable:&'a Instantiable<R>, num_bone_matrices:usize) -> Self {
+    pub fn new(instantiable: &'a Instantiable<R>, num_bone_matrices: usize) -> Self {
         let transformation = Transformation::new();
-        let trans_mat = [0.;16];
+        let trans_mat = [0.; 16];
         let bone_poses = Vec::new();
         let mut bone_matrices = Vec::with_capacity(num_bone_matrices);
         for _ in 0..num_bone_matrices {
-            bone_matrices.push([0.;16]);
+            bone_matrices.push([0.; 16]);
         }
-        Self { instantiable, transformation, trans_mat, bone_poses, bone_matrices }
+        Self {
+            instantiable,
+            transformation,
+            trans_mat,
+            bone_poses,
+            bone_matrices,
+        }
     }
 }

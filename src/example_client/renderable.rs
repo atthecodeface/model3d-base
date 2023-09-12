@@ -82,7 +82,7 @@ impl Renderable for Id {
         &mut self,
         client: &mut Self::View,
         buffer_view: &BufferView<Self>,
-        attr: VertexAttr,
+        _attr: VertexAttr,
     ) {
         buffer_view.data.create_client(self);
         *client = buffer_view.data.borrow_client().clone();

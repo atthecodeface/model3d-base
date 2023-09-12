@@ -24,7 +24,7 @@ limitations under the License.
 use crate::hierarchy;
 use hierarchy::Hierarchy;
 
-use crate::{Component, Renderable, Skeleton, RenderRecipe, Vertices, Material, Instance};
+use crate::{Component, Instance, Material, RenderRecipe, Renderable, Skeleton, Vertices};
 
 //a Instantiable
 //tp Instantiable
@@ -72,14 +72,19 @@ where
     /// Such a type can that be 'instance'd with a specific
     /// transformation and bone poses, and such instances can then be
     /// drawn using shaders.
-    pub fn new(skeleton: Option<Skeleton>,
-               vertices: Vec<&Vertices<R>>,
-               _materials: Vec<&dyn Material<R>>,
-               mut components: Hierarchy<Component>) -> Self {
+    pub fn new(
+        skeleton: Option<Skeleton>,
+        vertices: Vec<&Vertices<R>>,
+        _materials: Vec<&dyn Material<R>>,
+        mut components: Hierarchy<Component>,
+    ) -> Self {
         components.find_roots();
         let render_recipe = RenderRecipe::from_component_hierarchy(&components);
         let num_bone_matrices = 0;
-        let vertices = vertices.into_iter().map( |v| v.borrow_client().clone()).collect();
+        let vertices = vertices
+            .into_iter()
+            .map(|v| v.borrow_client().clone())
+            .collect();
         Self {
             skeleton,
             vertices,

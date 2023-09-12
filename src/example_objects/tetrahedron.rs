@@ -7,7 +7,7 @@ This provides a function to create [ExampleVertices] object that is a triangle o
 
 //a Imports
 use super::ExampleVertices;
-use crate::{BufferElementType, Renderable, Mesh, Primitive, VertexAttr, PrimitiveType};
+use crate::{BufferElementType, Mesh, Primitive, PrimitiveType, Renderable, VertexAttr};
 
 /// Add new position, normal and indices views to an [ExampleVertices] for  a tetrahedron at z=0.
 ///
@@ -31,35 +31,60 @@ pub fn new<'a, R: Renderable>(eg: &mut ExampleVertices<'a, R>, size: f32) {
     let height = (2.0_f32 / 3.0).sqrt();
     let centroid = height / 4.0;
     let r3_2 = (3.0_f32).sqrt() * 0.5;
-    let s = 1.0/(3.0_f32).sqrt();
+    let s = 1.0 / (3.0_f32).sqrt();
     let x = (23.0_f32 / 24.0).sqrt();
     let vertex_data = [
-        size*2.0*s, 0., 0.        , x,  0., -centroid,
-        -size*s, size*0.5, 0.     , -x*0.5, x*r3_2, -centroid,
-        -size*s, -size*0.5, 0.    , -x*0.5, -x*r3_2, -centroid,
-        0., 0., size * height     , 0., 0., 1.,
+        size * 2.0 * s,
+        0.,
+        0.,
+        x,
+        0.,
+        -centroid,
+        -size * s,
+        size * 0.5,
+        0.,
+        -x * 0.5,
+        x * r3_2,
+        -centroid,
+        -size * s,
+        -size * 0.5,
+        0.,
+        -x * 0.5,
+        -x * r3_2,
+        -centroid,
+        0.,
+        0.,
+        size * height,
+        0.,
+        0.,
+        1.,
     ];
-    let index_data = [0u8, 1, 2, 3, 0, 1,];
+    let index_data = [0u8, 1, 2, 3, 0, 1];
 
     let data_indices = eg.push_data(Box::pin(index_data));
     let data_vertices = eg.push_data(Box::pin(vertex_data));
 
     let indices = eg.push_view(data_indices, 6, BufferElementType::Int8, 0, 0);
-    let normals = eg.push_view(data_vertices, 3, BufferElementType::Float32, 3*4, 6*4);
-    let vertices = eg.push_view(data_vertices, 3, BufferElementType::Float32, 0, 6*4);
+    let normals = eg.push_view(data_vertices, 3, BufferElementType::Float32, 3 * 4, 6 * 4);
+    let vertices = eg.push_view(data_vertices, 3, BufferElementType::Float32, 0, 6 * 4);
 
     // Create set of data (indices, vertex data) to by subset into by the meshes and their primitives
     eg.push_vertices(indices, vertices, &[(VertexAttr::Normal, normals)]);
 }
-
 
 /// Create a mesh for the tetrahedron given the vertices index and
 /// material index within a parent model3d::Object
 ///
 /// The object should have had the vertices for the tetrahedron (created
 /// with new() above) added to it (using a parent [ExampleVertices])
-pub fn mesh(v_id:usize, m_id:usize) -> Mesh {
+pub fn mesh(v_id: usize, m_id: usize) -> Mesh {
     let mut mesh = Mesh::new();
-    mesh.add_primitive(Primitive::new(PrimitiveType::TriangleStrip, v_id, 0, 6, m_id));
+    mesh.add_primitive(Primitive::new(
+        PrimitiveType::TriangleStrip,
+        v_id,
+        0,
+        6,
+        m_id,
+    ));
     mesh
 }
