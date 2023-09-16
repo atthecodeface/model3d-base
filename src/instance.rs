@@ -25,15 +25,23 @@ use crate::{Instantiable, Mat4, Renderable, SkeletonPose, Transformation};
 
 //a Instance
 //tp Instance
-/// A drawable::Instance contains the instance data for an instance of a drawable::Instantiable
+/// A drawable::Instance contains the instance data for an instance of
+/// a drawable::Instantiable
 ///
-/// It requires a base transformation, an array of BonePose (which matches the Instantiable's BoneSet array), and an array of Mat4 for each bone in the BonePose array.
+/// It requires a base transformation, an array of BonePose (which
+/// matches the Instantiable's BoneSet array), and an array of Mat4
+/// for each bone in the BonePose array.
 pub struct Instance<'a, R>
 where
     R: Renderable,
 {
-    /// Reference to the [Instantiable]
-    /// This is provided as the instance *depends* on the [Instantiable] although it does not use the data here
+    /// Reference to the [Instantiable] this is based on
+    ///
+    /// This is provided as the instance *depends* on the
+    /// [Instantiable] although it does not use the data here
+    ///
+    /// The [Skeleton] of the [Instantiable] *is* borrowed by the
+    /// [SkeletonPose]
     pub instantiable: &'a Instantiable<R>,
     /// The transformation to apply to this model instance
     pub transformation: Transformation,

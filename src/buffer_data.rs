@@ -81,6 +81,13 @@ impl<'a, R: Renderable> BufferData<'a, R> {
         };
         let rc_client = RefCell::new(R::Buffer::default());
         let data = data.borrow_bytes();
+        assert!(
+            byte_offset + byte_length <= data.len() as u32,
+            "Buffer is not large enough for data {} + #{} [ got {}]",
+            byte_offset,
+            byte_length,
+            data.len()
+        );
         Self {
             data,
             byte_offset,

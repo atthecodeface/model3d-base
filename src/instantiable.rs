@@ -28,7 +28,8 @@ use crate::{Component, Instance, Material, RenderRecipe, Renderable, Skeleton, V
 
 //a Instantiable
 //tp Instantiable
-/// An Instantiable is a type that is related to a set of Mesh data, which can be instanced for different drawable::Instance's
+/// An Instantiable is a type that is related to a set of Mesh data,
+/// which can be instanced for different drawable::Instance's
 ///
 /// It requires a related set of Mesh data that it does not refer to:
 /// in object construction this Mesh data is likely to be the

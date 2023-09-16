@@ -32,9 +32,7 @@ pub trait ByteBuffer {
     /// Borrow the data as an array of bytes
     fn borrow_bytes(&self) -> &[u8];
     /// Return a pointer to the first byte of the data contents
-    fn as_ptr(&self) -> *const u8 {
-        self.borrow_bytes().as_ptr()
-    }
+    fn as_u8_ptr(&self) -> *const u8;
 }
 
 //ti ByteBuffer for [T; N]
@@ -47,7 +45,16 @@ impl<T, const N: usize> ByteBuffer for [T; N] {
 
     //fp borrow_bytes
     fn borrow_bytes(&self) -> &[u8] {
-        unsafe { std::mem::transmute::<&[T], &[u8]>(self) }
+        let len = std::mem::size_of::<T>() * self.len();
+        let data = self.as_u8_ptr();
+        unsafe { std::slice::from_raw_parts(data, len) }
+    }
+
+    //fp as_u8_ptr
+    fn as_u8_ptr(&self) -> *const u8 {
+        let data: *const T = &self[0];
+        let data = unsafe { std::mem::transmute::<_, *const u8>(data) };
+        data
     }
 
     //zz All done
@@ -63,7 +70,16 @@ impl<T> ByteBuffer for Vec<T> {
 
     //fp borrow_bytes
     fn borrow_bytes(&self) -> &[u8] {
-        unsafe { std::mem::transmute::<&[T], &[u8]>(self) }
+        let len = std::mem::size_of::<T>() * self.len();
+        let data = self.as_u8_ptr();
+        unsafe { std::slice::from_raw_parts(data, len) }
+    }
+
+    //fp as_u8_ptr
+    fn as_u8_ptr(&self) -> *const u8 {
+        let data: *const T = &self[0];
+        let data = unsafe { std::mem::transmute::<_, *const u8>(data) };
+        data
     }
 
     //zz All done
