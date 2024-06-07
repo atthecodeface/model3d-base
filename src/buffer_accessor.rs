@@ -25,15 +25,15 @@ use std::cell::RefCell;
 
 use crate::{BufferData, BufferElementType, Renderable, VertexAttr};
 
-//a BufferView
-//tp BufferView
+//a BufferAccessor
+//tp BufferAccessor
 /// A subset of a `BufferData`, used for vertex attributes;
 /// hence for use in a vertex attribute pointer.
 ///
-/// A `BufferView` is used for a single attribute of a set of data, such as
+/// A `BufferAccessor` is used for a single attribute of a set of data, such as
 /// Position or Normal.
 #[derive(Debug)]
-pub struct BufferView<'a, R: Renderable + ?Sized> {
+pub struct BufferAccessor<'a, R: Renderable + ?Sized> {
     /// The `BufferData` that contains the actual vertex attribute data
     pub data: &'a BufferData<'a, R>,
     /// For attributes: number of elements per vertex (1 to 4)
@@ -51,14 +51,14 @@ pub struct BufferView<'a, R: Renderable + ?Sized> {
     /// The client bound to data\[byte_offset\] .. + byte_length
     ///
     /// This must be held as a [RefCell] as the [BufferData] is
-    /// created early in the process, prior to any `BufferView`s using
+    /// created early in the process, prior to any `BufferAccessor`s using
     /// it - which then have shared references to the daata - but the
     /// client is created afterwards
     rc_client: RefCell<R::View>,
 }
 
-//ip BufferView
-impl<'a, R: Renderable> BufferView<'a, R> {
+//ip BufferAccessor
+impl<'a, R: Renderable> BufferAccessor<'a, R> {
     //fp new
     /// Create a new view of a `BufferData`
     pub fn new(
@@ -80,7 +80,7 @@ impl<'a, R: Renderable> BufferView<'a, R> {
     }
 
     //mp create_client
-    /// Create the render buffer required by the BufferView
+    /// Create the render buffer required by the BufferAccessor
     pub fn create_client(&self, attr: VertexAttr, renderable: &mut R) {
         use std::ops::DerefMut;
         renderable.init_buffer_view_client(self.rc_client.borrow_mut().deref_mut(), self, attr);
@@ -95,16 +95,16 @@ impl<'a, R: Renderable> BufferView<'a, R> {
     //zz All done
 }
 
-//ip Display for BufferView
-impl<'a, R: Renderable> std::fmt::Display for BufferView<'a, R> {
+//ip Display for BufferAccessor
+impl<'a, R: Renderable> std::fmt::Display for BufferAccessor<'a, R> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         write!(
             f,
-            "BufferView[{:?}#{}]\n  {}+{}+n*{}\n",
+            "BufferAccessor[{:?}#{}]\n  {}+{}+n*{}\n",
             self.ele_type, self.count, self.data, self.byte_offset, self.stride
         )
     }
 }
 
-//ip DefaultIndentedDisplay for BufferView
-impl<'a, R: Renderable> indent_display::DefaultIndentedDisplay for BufferView<'a, R> {}
+//ip DefaultIndentedDisplay for BufferAccessor
+impl<'a, R: Renderable> indent_display::DefaultIndentedDisplay for BufferAccessor<'a, R> {}

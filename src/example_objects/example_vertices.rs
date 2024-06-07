@@ -3,7 +3,7 @@ use std::pin::Pin;
 // use std::ops::Deref;
 
 use crate::{
-    BufferData, BufferElementType, BufferView, ByteBuffer, Renderable, VertexAttr, Vertices,
+    BufferData, BufferElementType, BufferAccessor, ByteBuffer, Renderable, VertexAttr, Vertices,
 };
 
 //a ExampleVertices
@@ -14,7 +14,7 @@ use crate::{
 pub struct ExampleVertices<'a, R: Renderable> {
     buffers: Vec<Pin<Box<dyn ByteBuffer>>>,
     data: Vec<Pin<Box<BufferData<'a, R>>>>,
-    views: Vec<Pin<Box<BufferView<'a, R>>>>,
+    views: Vec<Pin<Box<BufferAccessor<'a, R>>>>,
     vertices: Vec<Vertices<'a, R>>,
 }
 
@@ -51,7 +51,7 @@ impl<'a, R: Renderable> ExampleVertices<'a, R> {
     }
 
     //fp push_view
-    /// Create a new [BufferView] on a particular [ByteBuffer] instance that has already been pushed
+    /// Create a new [BufferAccessor] on a particular [ByteBuffer] instance that has already been pushed
     pub fn push_view(
         &mut self,
         data: usize,
@@ -64,7 +64,7 @@ impl<'a, R: Renderable> ExampleVertices<'a, R> {
         let d = unsafe {
             std::mem::transmute::<&BufferData<'_, R>, &'a BufferData<'a, R>>(&self.data[data])
         };
-        let view = Box::pin(BufferView::new(d, num, et, ofs, stride));
+        let view = Box::pin(BufferAccessor::new(d, num, et, ofs, stride));
         self.views.push(view);
         n
     }
@@ -72,9 +72,9 @@ impl<'a, R: Renderable> ExampleVertices<'a, R> {
     //fp push_vertices
     /// Create a new [Vertices] using a set of indices and positions
     ///
-    /// This extends the life of the BufferView to that of the ExampleVertices
+    /// This extends the life of the BufferAccessor to that of the ExampleVertices
     ///
-    /// This is safe as the BufferView's are in the Vec for ExampleVertices
+    /// This is safe as the BufferAccessor's are in the Vec for ExampleVertices
     pub fn push_vertices(
         &mut self,
         indices: usize,
@@ -83,15 +83,15 @@ impl<'a, R: Renderable> ExampleVertices<'a, R> {
     ) -> usize {
         let n = self.vertices.len();
         let i = unsafe {
-            std::mem::transmute::<&BufferView<'_, R>, &'a BufferView<'a, R>>(&self.views[indices])
+            std::mem::transmute::<&BufferAccessor<'_, R>, &'a BufferAccessor<'a, R>>(&self.views[indices])
         };
         let v = unsafe {
-            std::mem::transmute::<&BufferView<'_, R>, &'a BufferView<'a, R>>(&self.views[positions])
+            std::mem::transmute::<&BufferAccessor<'_, R>, &'a BufferAccessor<'a, R>>(&self.views[positions])
         };
         let mut vertices = Vertices::new(i, v);
         for (attr, view_id) in attrs {
             let v = unsafe {
-                std::mem::transmute::<&BufferView<'_, R>, &'a BufferView<'a, R>>(
+                std::mem::transmute::<&BufferAccessor<'_, R>, &'a BufferAccessor<'a, R>>(
                     &self.views[*view_id],
                 )
             };

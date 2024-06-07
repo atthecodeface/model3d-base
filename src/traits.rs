@@ -1,4 +1,4 @@
-use crate::{BufferData, BufferView, VertexAttr, Vertices};
+use crate::{BufferData, BufferAccessor, VertexAttr, Vertices};
 use crate::{MaterialAspect, MaterialBaseData};
 
 //a BufferClient
@@ -15,7 +15,7 @@ pub trait BufferClient:
 }
 
 //tt ViewClient
-/// Trait supported by a BufferView client
+/// Trait supported by a BufferAccessor client
 ///
 /// A buffer client is created first by a buffer as 'none'
 ///
@@ -57,7 +57,7 @@ pub trait VerticesClient: Sized + std::fmt::Debug + std::default::Default + Clon
 pub trait Renderable: Sized {
     /// The renderer's type that reflects a [BufferData]
     type Buffer: BufferClient;
-    /// The renderer's type that reflects a [BufferView]
+    /// The renderer's type that reflects a [BufferAccessor]
     type View: ViewClient;
     /// The renderer's type that represents a texture; this is
     /// supplied to material creation, and hence is less a product of
@@ -67,8 +67,8 @@ pub trait Renderable: Sized {
     /// to be an extraction of the aspects of a material that the
     /// renderer pipelines can apply.
     type Material: MaterialClient;
-    /// The renderer's type that reflects a [BufferView] of indices
-    /// and the associated [BufferView]s of attributes supported by a
+    /// The renderer's type that reflects a [BufferAccessor] of indices
+    /// and the associated [BufferAccessor]s of attributes supported by a
     /// particular pipeline within the renderer
     type Vertices: VerticesClient;
     // type Instantiable : ;
@@ -82,7 +82,7 @@ pub trait Renderable: Sized {
     fn init_buffer_view_client(
         &mut self,
         client: &mut Self::View,
-        buffer_view: &BufferView<Self>,
+        buffer_view: &BufferAccessor<Self>,
         attr: VertexAttr,
     );
     /// Create a client for a reason - reason 0 is reserved

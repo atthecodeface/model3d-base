@@ -2,16 +2,16 @@
 use std::rc::Rc;
 
 use crate::{
-    BufferClient, BufferData, BufferView, Material, MaterialClient, Renderable, TextureClient,
+    BufferClient, BufferData, BufferAccessor, Material, MaterialClient, Renderable, TextureClient,
     VertexAttr, Vertices, VerticesClient, ViewClient,
 };
 
 //a Buffer
 //tp Buffer
-/// A Buffer, which is used for both a [BufferData] and a BufferView client
+/// A Buffer, which is used for both a [BufferData] and a BufferAccessor client
 ///
 /// This is a reference counted object - each [BufferData] has a
-/// seperate one of these, and each [BufferView] clones it so that if
+/// seperate one of these, and each [BufferAccessor] clones it so that if
 /// there are N views then (after deconstruction of the object) a
 /// Buffer will have a strong count of the number of views upon it
 #[derive(Debug, Clone)]
@@ -81,7 +81,7 @@ impl Renderable for Id {
     fn init_buffer_view_client(
         &mut self,
         client: &mut Self::View,
-        buffer_view: &BufferView<Self>,
+        buffer_view: &BufferAccessor<Self>,
         _attr: VertexAttr,
     ) {
         buffer_view.data.create_client(self);

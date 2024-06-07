@@ -1,5 +1,5 @@
 use model3d_base::example_client::Renderable;
-use model3d_base::{BufferView, MaterialAspect};
+use model3d_base::{BufferAccessor, MaterialAspect};
 
 // Create an object and interrogate it
 // Create two distinct renderables
@@ -18,7 +18,7 @@ fn test0() {
     obj.add_component(None, None, mesh);
     obj.analyze();
     let x = obj.borrow_vertices(v_id).borrow_client();
-    let _p: &BufferView<Renderable> = obj.borrow_vertices(v_id).borrow_indices();
+    let _p: &BufferAccessor<Renderable> = obj.borrow_vertices(v_id).borrow_indices();
     let _p: Option<&Renderable> = obj
         .borrow_material(m_id)
         .borrow_texture(MaterialAspect::Normal);

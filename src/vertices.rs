@@ -19,12 +19,12 @@ limitations under the License.
 //a Imports
 use std::cell::{Ref, RefCell};
 
-use crate::BufferView;
+use crate::BufferAccessor;
 use crate::{Renderable, VertexAttr};
 
 //a Vertices
 //tp Vertices
-/// A set of vertices using one or more [crate::BufferData] through [BufferView]s.
+/// A set of vertices using one or more [crate::BufferData] through [BufferAccessor]s.
 ///
 /// A number of [Vertices] is used by an `Object`, its components and their meshes; one is used for each primitive within a mesh for its elements.
 /// The actual elements will be sets of triangles (as stripes or
@@ -44,10 +44,10 @@ use crate::{Renderable, VertexAttr};
 /// appropriate render options (uniforms in OpenGL)
 #[derive(Debug)]
 pub struct Vertices<'vertices, R: Renderable + ?Sized> {
-    indices: &'vertices BufferView<'vertices, R>,
-    position: &'vertices BufferView<'vertices, R>,
+    indices: &'vertices BufferAccessor<'vertices, R>,
+    position: &'vertices BufferAccessor<'vertices, R>,
     rc_client: RefCell<R::Vertices>,
-    attrs: Vec<(VertexAttr, &'vertices BufferView<'vertices, R>)>,
+    attrs: Vec<(VertexAttr, &'vertices BufferAccessor<'vertices, R>)>,
 }
 
 //ip Vertices
@@ -55,8 +55,8 @@ impl<'vertices, R: Renderable> Vertices<'vertices, R> {
     //fp new
     /// Create a new [Vertices] object with no additional attributes
     pub fn new(
-        indices: &'vertices BufferView<'vertices, R>,
-        position: &'vertices BufferView<'vertices, R>,
+        indices: &'vertices BufferAccessor<'vertices, R>,
+        position: &'vertices BufferAccessor<'vertices, R>,
     ) -> Self {
         let attrs = Vec::new();
         let rc_client = RefCell::new(R::Vertices::default());
@@ -69,30 +69,30 @@ impl<'vertices, R: Renderable> Vertices<'vertices, R> {
     }
 
     //mp add_attr
-    /// Add a [BufferView] for a particular [VertexAttr]
+    /// Add a [BufferAccessor] for a particular [VertexAttr]
     ///
     /// On creation the [Vertices] will have views for indices and
     /// positions; this provides a means to add views for things such
     /// as normal, tex coords, etc
-    pub fn add_attr(&mut self, attr: VertexAttr, view: &'vertices BufferView<'vertices, R>) {
+    pub fn add_attr(&mut self, attr: VertexAttr, view: &'vertices BufferAccessor<'vertices, R>) {
         self.attrs.push((attr, view));
     }
 
     //mp borrow_indices
-    /// Borrow the indices [BufferView]
-    pub fn borrow_indices<'a>(&'a self) -> &'a BufferView<'vertices, R> {
+    /// Borrow the indices [BufferAccessor]
+    pub fn borrow_indices<'a>(&'a self) -> &'a BufferAccessor<'vertices, R> {
         self.indices
     }
 
     //mp borrow_position
-    /// Borrow the position [BufferView]
-    pub fn borrow_position<'a>(&'a self) -> &'a BufferView<'vertices, R> {
+    /// Borrow the position [BufferAccessor]
+    pub fn borrow_position<'a>(&'a self) -> &'a BufferAccessor<'vertices, R> {
         self.position
     }
 
     //mp borrow_attr
-    /// Borrow an attribute [BufferView] if the [Vertices] has one
-    pub fn borrow_attr<'a>(&'a self, attr: VertexAttr) -> Option<&'a BufferView<'vertices, R>> {
+    /// Borrow an attribute [BufferAccessor] if the [Vertices] has one
+    pub fn borrow_attr<'a>(&'a self, attr: VertexAttr) -> Option<&'a BufferAccessor<'vertices, R>> {
         for i in 0..self.attrs.len() {
             if self.attrs[i].0 == attr {
                 return Some(self.attrs[i].1);
@@ -103,12 +103,12 @@ impl<'vertices, R: Renderable> Vertices<'vertices, R> {
 
     //mp iter_attrs
     /// Iterate through attributes
-    pub fn iter_attrs(&self) -> std::slice::Iter<(VertexAttr, &BufferView<'vertices, R>)> {
+    pub fn iter_attrs(&self) -> std::slice::Iter<(VertexAttr, &BufferAccessor<'vertices, R>)> {
         self.attrs.iter()
     }
 
     //mp create_client
-    /// Create the render buffer required by the BufferView
+    /// Create the render buffer required by the BufferAccessor
     pub fn create_client(&self, renderer: &mut R) {
         self.indices.create_client(VertexAttr::Indices, renderer);
         self.position.create_client(VertexAttr::Position, renderer);
