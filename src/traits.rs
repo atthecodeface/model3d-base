@@ -14,7 +14,7 @@ pub trait BufferClient:
 {
 }
 
-//tt ViewClient
+//tt AccessorClient
 /// Trait supported by a BufferAccessor client
 ///
 /// A buffer client is created first by a buffer as 'none'
@@ -23,7 +23,7 @@ pub trait BufferClient:
 ///
 /// The data may be created more than once with the same buffer; the client
 /// is responsible for dedupliclation within the render context if required
-pub trait ViewClient:
+pub trait AccessorClient:
     Sized + std::fmt::Display + std::fmt::Debug + std::default::Default + Clone
 {
 }
@@ -58,7 +58,7 @@ pub trait Renderable: Sized {
     /// The renderer's type that reflects a [BufferData]
     type Buffer: BufferClient;
     /// The renderer's type that reflects a [BufferAccessor]
-    type View: ViewClient;
+    type Accessor: AccessorClient;
     /// The renderer's type that represents a texture; this is
     /// supplied to material creation, and hence is less a product of
     /// the renderer and more an input to the 3D model library
@@ -81,7 +81,7 @@ pub trait Renderable: Sized {
     /// Initialize a buffer view client
     fn init_buffer_view_client(
         &mut self,
-        client: &mut Self::View,
+        client: &mut Self::Accessor,
         buffer_view: &BufferAccessor<Self>,
         attr: VertexAttr,
     );

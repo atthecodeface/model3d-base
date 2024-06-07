@@ -41,12 +41,13 @@ provided for slice <> and for Vec<>.
 
 A type that borrows a sub slice of[u8], using an explicit offset and
 length, and which might have a client reference (e.g. an OpenGL
-GlBuffer handle)
+GlBuffer handle). It is similar to a Gltf BufferView, without a
+'stride'.
 
 The base concept for model [BufferData] is that it is an immutable
 borrow of a portion of some model data buffer of a type that supports
 the [ByteBuffer] trait; the data internally may be floats, ints, etc,
-or combinations thereof - from which one creates [BufferView]s, or
+or combinations thereof - from which one creates [BufferAccessor]s, or
 which it is itself used as model indices. So it can be the complete
 data for a whole set of models.
 
@@ -55,35 +56,34 @@ Each [BufferData] has a related client element (a
 client structures created; this may be an Rc of an OpenGL buffer, if
 the client is an OpenGL renderer.
 
-Each [BufferData] is use through one or more [BufferView].
+Each [BufferData] is use through one or more [BufferAccessor].
 
-### {BufferView]
+### {BufferAccessor]
 
-A [BufferView] is an immutable reference to a subset of a [BufferData]. A [BufferView]
+A [BufferAccessor] is an immutable reference to a subset of a [BufferData]. A [BufferAccessor]
 may, for example, be the vertex positions for one or more models; it may
 be texture coordinates; and so on. The [BufferData] corresponds on the
 OpenGL side to an ARRAY_BUFFER or an ELEMENT_ARRAY_BUFFER; hence it
 expects to have a VBO associated with it.
 
-The [BufferView] here is close to a glTF Accessor - it combines in
-essence the gltF Accessor and the glTF BufferView.
+The [BufferAccessor] is similar to a glTF Accessor.
 
-Each [BufferView] has a related client element (a
+Each [BufferAccessor] has a related client element (a
 [Renderable::View]) which is created when an [Object] has its
 client structures created; this may be the data indicating the subset
 of the [Renderable::Buffer] that the view refers to, or perhaps a
 client buffer of its own.
 
-A set of [BufferView]s are borrowed to describe [Vertices], each
-[BufferView] providing one piece of vertex information (such as
-indices, position or normal). A single [BufferView] may be used by
+A set of [BufferAccessor]s are borrowed to describe [Vertices], each
+[BufferAccessor] providing one piece of vertex information (such as
+indices, position or normal). A single [BufferAccessor] may be used by
 more than one [Vertices] object.
 
 ### [Vertices]
 
-The [Vertrices] type borrows at least one [BufferView] for a vertex
-indices buffer, and at least one [BufferView] for positions of the
-vertices; in addition it borrows more [BufferView], one for each
+The [Vertrices] type borrows at least one [BufferAccessor] for a vertex
+indices buffer, and at least one [BufferAccessor] for positions of the
+vertices; in addition it borrows more [BufferAccessor], one for each
 attribute [VertexAttr] that is part of a mesh or set of meshes.
 
 The [Vertices] object should be considered to be a complete descriptor
@@ -138,14 +138,14 @@ A [Material] has a make_renderable() method that makes it renderable?
 
 ## Vertices
 
-A [Vertices] object is a set of related [BufferView]s, with at least a
+A [Vertices] object is a set of related [BufferAccessor]s, with at least a
 view for indices and a view for vertex positions; it may have more
 views for additional attributes. It has a lifetime that is no longer
-than that of the [BufferData] from which the [BufferView]s are made.
+than that of the [BufferData] from which the [BufferAccessor]s are made.
 
 A [Renderable::Vertices] can be constructed from a [Vertices]; this
 is a renderer-specific vertices instance that replaces the use of
-[BufferView]s with the underlying client types.
+[BufferAccessor]s with the underlying client types.
 
 ## Object [Component]s
 
@@ -172,7 +172,7 @@ A [Primitive] contains:
 
 Note that a hierarchy of object [Component]s is implicitly
 `renderable` as it contains only indices, not actual references to
-[BufferView] data structures.
+[BufferAccessor] data structures.
 
 A hierarchy of object [Component]s can be reduced to a
 [RenderRecipe]; this is an array of:
@@ -198,7 +198,7 @@ A 3D model [Object] consists of:
 *  a [Skeleton]
 
 *  an array of [Vertices]; each of these is a set
-of indices within a [BufferData] and attribute [BufferView]s.
+of indices within a [BufferData] and attribute [BufferAccessor]s.
 
 *  an array of [Material]
 
@@ -312,7 +312,7 @@ node content may be updated at will.
 
 # Examples
 
-use model3d::{BufferView, MaterialAspect};
+use model3d::{BufferAccessor, MaterialAspect};
 use model3d::example_client::Renderable;
 
 # To do
@@ -368,7 +368,7 @@ pub use byte_buffer::ByteBuffer;
 
 mod traits;
 pub use traits::{
-    BufferClient, Material, MaterialClient, Renderable, TextureClient, VerticesClient, ViewClient,
+    BufferClient, Material, MaterialClient, Renderable, TextureClient, VerticesClient, AccessorClient,
 };
 mod material;
 pub use material::BaseData as MaterialBaseData;

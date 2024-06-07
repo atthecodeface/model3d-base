@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use crate::{
     BufferClient, BufferData, BufferAccessor, Material, MaterialClient, Renderable, TextureClient,
-    VertexAttr, Vertices, VerticesClient, ViewClient,
+    VertexAttr, Vertices, VerticesClient, AccessorClient,
 };
 
 //a Buffer
@@ -34,8 +34,8 @@ impl Default for Buffer {
 //ip BufferClient for Buffer
 impl BufferClient for Buffer {}
 
-//ip ViewClient for Buffer
-impl ViewClient for Buffer {}
+//ip AccessorClient for Buffer
+impl AccessorClient for Buffer {}
 
 //a Id
 //tp Id
@@ -71,7 +71,7 @@ impl VerticesClient for Id {}
 //ip Renderable for Id
 impl Renderable for Id {
     type Buffer = Buffer;
-    type View = Buffer;
+    type Accessor = Buffer;
     type Texture = Id;
     type Material = Id;
     type Vertices = Id;
@@ -80,7 +80,7 @@ impl Renderable for Id {
     }
     fn init_buffer_view_client(
         &mut self,
-        client: &mut Self::View,
+        client: &mut Self::Accessor,
         buffer_view: &BufferAccessor<Self>,
         _attr: VertexAttr,
     ) {

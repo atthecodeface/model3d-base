@@ -54,7 +54,7 @@ pub struct BufferAccessor<'a, R: Renderable + ?Sized> {
     /// created early in the process, prior to any `BufferAccessor`s using
     /// it - which then have shared references to the daata - but the
     /// client is created afterwards
-    rc_client: RefCell<R::View>,
+    rc_client: RefCell<R::Accessor>,
 }
 
 //ip BufferAccessor
@@ -68,7 +68,7 @@ impl<'a, R: Renderable> BufferAccessor<'a, R> {
         byte_offset: u32, // offset in bytes?
         stride: u32,      // stride between elements (0->count*sizeof(ele_type))
     ) -> Self {
-        let rc_client = RefCell::new(R::View::default());
+        let rc_client = RefCell::new(R::Accessor::default());
         Self {
             data,
             count,
@@ -88,7 +88,7 @@ impl<'a, R: Renderable> BufferAccessor<'a, R> {
 
     //ap borrow_client
     /// Borrow the client
-    pub fn borrow_client(&self) -> std::cell::Ref<R::View> {
+    pub fn borrow_client(&self) -> std::cell::Ref<R::Accessor> {
         self.rc_client.borrow()
     }
 
