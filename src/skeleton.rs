@@ -1,21 +1,3 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    bone_set.rs
-@brief   Bone hierarchy
- */
-
 //a Imports
 use indent_display::{IndentedDisplay, IndentedOptions, Indenter, NullOptions};
 
@@ -40,6 +22,13 @@ pub struct Skeleton {
     pub temp_mat4s: Vec<Mat4>,
     /// Max bone index
     pub max_index: usize,
+}
+
+//ip Default for Skeleton
+impl Default for Skeleton {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 //ip Skeleton
@@ -95,7 +84,7 @@ impl Skeleton {
     /// the recipes, and finding the number of bone matrices required
     /// to be exported
     pub fn resolve(&mut self) {
-        if self.roots.len() == 0 {
+        if self.roots.is_empty() {
             self.skeleton.find_roots();
             for r in self.skeleton.borrow_roots() {
                 self.roots
@@ -129,12 +118,9 @@ impl Skeleton {
             let (_, bones) = self.skeleton.borrow_mut();
             for (_, recipe) in &self.roots {
                 for op in recipe.borrow_ops() {
-                    match op {
-                        hierarchy::NodeEnumOp::Push(n, _) => {
-                            bones[*n].data.matrix_index = bone_count;
-                            bone_count += 1;
-                        }
-                        _ => {}
+                    if let hierarchy::NodeEnumOp::Push(n, _) = op {
+                        bones[*n].data.matrix_index = bone_count;
+                        bone_count += 1;
                     }
                 }
             }
@@ -149,7 +135,7 @@ impl Skeleton {
     ///
     pub fn derive_matrices(&mut self) {
         assert!(
-            self.roots.len() != 0,
+            !self.roots.is_empty(),
             "Resolve MUST have been invoked prior to derive_matrices"
         );
         let (_, bones) = self.skeleton.borrow_mut();
@@ -179,7 +165,7 @@ impl Skeleton {
 
     //fp iter_roots
     /// Iterate through the root bone indices in the [Skeleton]
-    pub fn iter_roots<'z>(&'z self) -> impl Iterator<Item = usize> + '_ {
+    pub fn iter_roots(&self) -> impl Iterator<Item = usize> + '_ {
         self.roots.iter().map(|(n, _)| *n)
     }
 

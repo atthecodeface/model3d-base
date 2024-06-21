@@ -1,25 +1,3 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    drawable.rs
-@brief   Part of OpenGL library
- */
-
-//a Notes
-//
-//
-
 //a Imports
 use crate::hierarchy;
 use hierarchy::Hierarchy;
@@ -28,7 +6,7 @@ use crate::{Component, Instance, Material, RenderRecipe, Renderable, Skeleton, V
 
 //a Instantiable
 //tp Instantiable
-/// An Instantiable is a type that is related to a set of Mesh data,
+/// An [Instantiable] is a type that is related to a set of Mesh data,
 /// which can be instanced for different drawable::Instance's
 ///
 /// It requires a related set of Mesh data that it does not refer to:
@@ -84,7 +62,10 @@ where
         let num_bone_matrices = 0;
         let vertices = vertices
             .into_iter()
-            .map(|v| v.borrow_client().clone())
+            .map(|v| {
+                println!("{v}");
+                v.borrow_client().clone()
+            })
             .collect();
         Self {
             skeleton,
@@ -97,7 +78,7 @@ where
     //mp instantiate
     /// Create an `Instance` from this instantiable - must be used with accompanying mesh data in the appropriate form for the client
     /// Must still add bone_poses one per bone set
-    pub fn instantiate<'a>(&'a self) -> Instance<'a, R> {
+    pub fn instantiate(&self) -> Instance<R> {
         Instance::new(self, self.num_bone_matrices)
     }
 

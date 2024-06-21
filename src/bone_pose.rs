@@ -1,21 +1,3 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    bone.rs
-@brief   Bone and bone hierarchy
- */
-
 //a Imports
 use geo_nd::matrix;
 
@@ -49,7 +31,7 @@ impl<'a> BonePose<'a> {
     //fp new
     /// Create a new pose of a bone
     pub fn new(bone: &'a Bone) -> Self {
-        let transformation = bone.borrow_transformation().clone();
+        let transformation = *bone.borrow_transformation();
         let pbtp = [0.; 16];
         let animated_btm = [0.; 16];
         let animated_mtm = [0.; 16];
@@ -117,7 +99,7 @@ impl<'a> BonePose<'a> {
 //ip Display for BonePose
 impl<'a> std::fmt::Display for BonePose<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        write!(f, "Pose\n")?;
+        writeln!(f, "Pose")?;
         write!(f, "  {}", self.bone)?;
         write!(f, "  {}", self.transformation)?;
         write!(f, "  {:?}", self.pbtp)?;

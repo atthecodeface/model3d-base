@@ -1,21 +1,3 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    bone.rs
-@brief   Bone and bone hierarchy
- */
-
 //a Imports
 use indent_display::{IndentedDisplay, IndentedOptions, Indenter};
 
@@ -100,8 +82,8 @@ impl<'a> SkeletonPose<'a> {
             self.last_updated = tick;
             self.derive_animation();
             let bones = self.skeleton.skeleton.borrow_elements();
-            for i in 0..self.poses.len() {
-                let matrix_index = bones[i].data.matrix_index;
+            for (i, bone) in bones.iter().enumerate().take(self.poses.len()) {
+                let matrix_index = bone.data.matrix_index;
                 self.data[matrix_index] = *self.poses[i].borrow_animated_mtm();
             }
         }

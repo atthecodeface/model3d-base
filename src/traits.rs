@@ -1,4 +1,4 @@
-use crate::{BufferData, BufferAccessor, VertexAttr, Vertices};
+use crate::{BufferAccessor, BufferData, VertexAttr, Vertices};
 use crate::{MaterialAspect, MaterialBaseData};
 
 //a BufferClient
@@ -104,9 +104,9 @@ pub trait Material<R: Renderable> {
 
     /// Borrow the basic data of a material - color and base
     /// metallic/roughness, for example
-    fn borrow_base_data(&self) -> &MaterialBaseData;
+    fn base_data(&self) -> &MaterialBaseData;
     /// Borrow the texture ID associated with an aspect
-    fn borrow_texture(&self, _aspect: MaterialAspect) -> Option<&R::Texture> {
+    fn texture(&self, _aspect: MaterialAspect) -> Option<&R::Texture> {
         None
     }
 }

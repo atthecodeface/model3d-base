@@ -20,6 +20,8 @@ use crate::PrimitiveType;
 #[derive(Debug, Clone)]
 pub struct Primitive {
     /// First index to use
+    ///
+    /// If all 1s then vertices_index is invalid?
     index_offset: u32,
     /// Number of indices to use
     index_count: u32,
@@ -46,8 +48,6 @@ impl Primitive {
         index_count: u32,
         material_index: usize,
     ) -> Self {
-        let index_offset = index_offset as u32;
-        let index_count = index_count as u32;
         let material_index = material_index as u16;
         let vertices_index = vertices_index as u16;
         Self {

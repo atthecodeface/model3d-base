@@ -1,21 +1,3 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    object.rs
-@brief   Part of 3D model library
- */
-
 //a Imports
 use crate::hierarchy;
 use crate::Renderable;
@@ -45,6 +27,30 @@ where
     // pub meshes : Vec<usize>
 }
 
+//ip Display for Object
+impl<'a, R> std::fmt::Display for Object<'a, R>
+where
+    R: Renderable,
+{
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        writeln!(fmt, "Object: {{")?;
+        for v in &self.vertices {
+            writeln!(fmt, "  {v}")?;
+        }
+        writeln!(fmt, "}}")
+    }
+}
+
+//ip Default for Object
+impl<'a, R> Default for Object<'a, R>
+where
+    R: Renderable,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 //ip Object
 impl<'a, R> Object<'a, R>
 where
@@ -65,6 +71,18 @@ where
         }
     }
 
+    //ap vertices
+    /// Borrow one of the vertices
+    pub fn vertices(&self, n: usize) -> &Vertices<'a, R> {
+        self.vertices[n]
+    }
+
+    //mp material
+    /// Borrow a materiaal from the object
+    pub fn material(&self, n: usize) -> &dyn Material<R> {
+        self.materials[n]
+    }
+
     //mp add_vertices
     /// Add vertices to the object
     pub fn add_vertices(&mut self, vertices: &'a Vertices<'a, R>) -> usize {
@@ -73,24 +91,12 @@ where
         n
     }
 
-    //mp borrow_vertices
-    /// Borrow one of the vertices
-    pub fn borrow_vertices(&self, n: usize) -> &Vertices<'a, R> {
-        self.vertices[n]
-    }
-
     //fp add_material
     /// Add a material to the object
     pub fn add_material(&mut self, material: &'a dyn Material<R>) -> usize {
         let n = self.materials.len();
         self.materials.push(material);
         n
-    }
-
-    //mp borrow_material
-    /// Borrow a materiaal from the object
-    pub fn borrow_material(&self, n: usize) -> &dyn Material<R> {
-        self.materials[n]
     }
 
     //fp add_component
@@ -125,14 +131,6 @@ where
         self.components.find_roots();
     }
 
-    //mp create_client
-    /// Create the clients associated with the object - for vertices and materials
-    pub fn create_client(&self, renderer: &mut R) {
-        for v in &self.vertices {
-            v.create_client(renderer);
-        }
-    }
-
     //dp into_instantiable
     /// Deconstruct the object into an [Instantiable] for the
     /// renderable. This should be invoked after analysis and clients
@@ -142,13 +140,17 @@ where
     /// the object to be dropped, but the GPU-side objects (created by
     /// create_client) can be maintained. The [Instantiable] contains
     /// only instances of the types for the [Renderable].
-    pub fn into_instantiable(self) -> Instantiable<R> {
-        Instantiable::new(
+    pub fn into_instantiable(self, renderer: &mut R) -> Result<Instantiable<R>, (Self, String)> {
+        for v in &self.vertices {
+            v.create_client(renderer);
+        }
+        eprintln!("into_instantiable:: {self}");
+        Ok(Instantiable::new(
             self.skeleton,
             self.vertices,
             self.materials,
             self.components,
-        )
+        ))
     }
 
     //zz All done

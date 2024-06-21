@@ -1,25 +1,3 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    bezier.rs
-@brief   Part of geometry library
- */
-
-//a Notes
-//
-//
-
 //a Imports
 use std::cell::RefCell;
 
@@ -46,7 +24,6 @@ use crate::{ByteBuffer, Renderable};
 /// primitives may have their own individual `BufferViews`.
 ///
 /// A client may have one copy of the data for all the primitives and models.
-#[derive(Debug)]
 pub struct BufferData<'a, R: Renderable> {
     /// Data buffer itself
     data: &'a [u8],
@@ -63,6 +40,28 @@ pub struct BufferData<'a, R: Renderable> {
     rc_client: RefCell<R::Buffer>,
 }
 
+//ip Debug for BufferData
+impl<'a, R: Renderable> std::fmt::Debug for BufferData<'a, R> {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        let (data, cont) = {
+            if self.data.len() < 8 {
+                (self.data, "")
+            } else {
+                (&self.data[0..8], "...")
+            }
+        };
+        write!(
+            fmt,
+            "BufferData {{{0:?}{cont}#{4}, byte_offset:{1}, byte_length:{2}, client:{3:?}}}",
+            data,
+            self.byte_offset,
+            self.byte_length,
+            self.rc_client,
+            self.data.len(),
+        )
+    }
+}
+
 //ip BufferData
 impl<'a, R: Renderable> BufferData<'a, R> {
     //fp new
@@ -71,7 +70,7 @@ impl<'a, R: Renderable> BufferData<'a, R> {
     /// is used
     ///
     /// If offset and length are both zero, then all the data is used
-    pub fn new(data: &'a dyn ByteBuffer, byte_offset: u32, byte_length: u32) -> Self {
+    pub fn new<B: ByteBuffer + ?Sized>(data: &'a B, byte_offset: u32, byte_length: u32) -> Self {
         let byte_length = {
             if byte_length == 0 {
                 (data.byte_length() as u32) - byte_offset

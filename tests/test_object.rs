@@ -17,14 +17,15 @@ fn test0() {
     let mesh = model3d_base::example_objects::triangle::mesh(v_id, m_id);
     obj.add_component(None, None, mesh);
     obj.analyze();
-    let x = obj.borrow_vertices(v_id).borrow_client();
-    let _p: &BufferAccessor<Renderable> = obj.borrow_vertices(v_id).borrow_indices();
-    let _p: Option<&Renderable> = obj
-        .borrow_material(m_id)
-        .borrow_texture(MaterialAspect::Normal);
+    let x = obj.vertices(v_id).borrow_client();
+    let _p: &BufferAccessor<Renderable> = obj.vertices(v_id).borrow_indices();
+    let _p: Option<&Renderable> = obj.material(m_id).texture(MaterialAspect::Normal);
 
     drop(x); // so we can desconstruct obj
-    let inst = obj.into_instantiable();
+    let inst = obj
+        .into_instantiable(&mut Default::default())
+        .map_err(|(_, e)| e)
+        .expect("Failed to make the object instantiable");
     let r = &inst.render_recipe;
     assert_eq!(r.matrices.len(), 1, "Expected only an identity matrix");
     assert_eq!(

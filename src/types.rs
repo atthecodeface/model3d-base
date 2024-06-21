@@ -36,6 +36,21 @@ pub enum BufferElementType {
     Int32,
 }
 
+//ip BufferElementType
+impl BufferElementType {
+    /// Get the length in bytes of the element type
+    pub fn byte_length(self) -> usize {
+        use BufferElementType::*;
+        match self {
+            Float32 => 4,
+            Float16 => 2,
+            Int8 => 1,
+            Int16 => 2,
+            Int32 => 4,
+        }
+    }
+}
+
 //a Drawing
 /// A [VertexAttr] is a possible vertex attribute that can be used by
 /// a renderer; a vertex always has a position attribute, but

@@ -1,25 +1,3 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    bezier.rs
-@brief   Part of geometry library
- */
-
-//a Notes
-//
-//
-
 //a Imports
 use std::cell::RefCell;
 
@@ -50,19 +28,19 @@ use crate::ByteBuffer;
 /// OpenGL will have one copy of the data for all the primitives and models.
 pub struct Data<'a> {
     /// Data buffer itself
-    data        : &'a [u8],
+    data: &'a [u8],
     /// Offset in to the data buffer for the first byte
-    byte_offset : usize,
+    byte_offset: usize,
     /// Length of data used in the buffer
-    byte_length : usize,
+    byte_length: usize,
     /// if a gl buffer then bound to data[byte_offset] .. + byte_length
     /// This will *either* be an ELEMENT_ARRAY_BUFFER or an ARRAY_BUFFER
     /// depending on how it is initially bound
-    rc_gl_buffer   : RefCell<gl::types::GLuint>,
+    rc_gl_buffer: RefCell<gl::types::GLuint>,
 }
 
 //ip Data
-impl <'a> Data<'a> {
+impl<'a> Data<'a> {
     //fp new
     /// Create a new `Data` given a buffer, offset and length; if the
     /// length is zero then the whole of the data buffer post offset
@@ -72,13 +50,22 @@ impl <'a> Data<'a> {
     ///
     /// This function can be invoked prior to the OpenGL context being
     /// created; this performs no OpenGL calls
-    pub fn new<B:ByteBuffer>(data:&'a B, byte_offset:usize, byte_length:usize) -> Self {
+    pub fn new<B: ByteBuffer>(data: &'a B, byte_offset: usize, byte_length: usize) -> Self {
         let byte_length = {
-            if byte_length == 0 { data.byte_length()-byte_offset } else { byte_length }
+            if byte_length == 0 {
+                data.byte_length() - byte_offset
+            } else {
+                byte_length
+            }
         };
         let rc_gl_buffer = RefCell::new(0);
         let data = data.borrow_bytes();
-        Self { data, byte_offset, byte_length, rc_gl_buffer }
+        Self {
+            data,
+            byte_offset,
+            byte_length,
+            rc_gl_buffer,
+        }
     }
 
     //ap gl_buffer
@@ -96,12 +83,14 @@ impl <'a> Data<'a> {
         let gl_buffer = *self.rc_gl_buffer.borrow();
         if gl_buffer == 0 {
             unsafe {
-                gl::GenBuffers(1, self.rc_gl_buffer.as_ptr() );
+                gl::GenBuffers(1, self.rc_gl_buffer.as_ptr());
                 gl::BindBuffer(gl::ARRAY_BUFFER, *self.rc_gl_buffer.borrow());
-                gl::BufferData(gl::ARRAY_BUFFER,
-                               self.byte_length as gl::types::GLsizeiptr,
-                               self.data.as_ptr() as *const gl::types::GLvoid,
-                               gl::STATIC_DRAW );
+                gl::BufferData(
+                    gl::ARRAY_BUFFER,
+                    self.byte_length as gl::types::GLsizeiptr,
+                    self.data.as_ptr() as *const gl::types::GLvoid,
+                    gl::STATIC_DRAW,
+                );
             }
         }
     }
@@ -114,12 +103,14 @@ impl <'a> Data<'a> {
         let gl_buffer = *self.rc_gl_buffer.borrow();
         if gl_buffer == 0 {
             unsafe {
-                gl::GenBuffers(1, self.rc_gl_buffer.as_ptr() );
-                gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, *self.rc_gl_buffer.borrow() );
-                gl::BufferData(gl::ELEMENT_ARRAY_BUFFER,
-                               self.byte_length as gl::types::GLsizeiptr,
-                               self.data.as_ptr() as *const gl::types::GLvoid,
-                               gl::STATIC_DRAW );
+                gl::GenBuffers(1, self.rc_gl_buffer.as_ptr());
+                gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, *self.rc_gl_buffer.borrow());
+                gl::BufferData(
+                    gl::ELEMENT_ARRAY_BUFFER,
+                    self.byte_length as gl::types::GLsizeiptr,
+                    self.data.as_ptr() as *const gl::types::GLvoid,
+                    gl::STATIC_DRAW,
+                );
             }
         }
     }
@@ -128,8 +119,7 @@ impl <'a> Data<'a> {
     /// Bind the data to the VAO ELEMENT_ARRAY_BUFFER as the indices buffer
     pub fn gl_bind_indices(&self) {
         unsafe {
-            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER,
-                           self.gl_buffer() );
+            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.gl_buffer());
         }
     }
 
@@ -137,26 +127,32 @@ impl <'a> Data<'a> {
 }
 
 //ip Drop for Data
-impl <'a> Drop for Data<'a> {
+impl<'a> Drop for Data<'a> {
     //fp drop
     /// If an OpenGL buffer has been created for this then delete it
     fn drop(&mut self) {
         if self.gl_buffer() != 0 {
             unsafe {
-                gl::DeleteBuffers(1, self.rc_gl_buffer.as_ptr() );
+                gl::DeleteBuffers(1, self.rc_gl_buffer.as_ptr());
             }
         }
     }
 }
 
 //ip Display for Data
-impl <'a> std::fmt::Display for Data<'a> {
-    fn fmt(&self, f:&mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+impl<'a> std::fmt::Display for Data<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         let data_ptr = self.data.as_ptr();
-        write!(f,"Data[{:?}+{}#{}]:GL({})", data_ptr, self.byte_offset, self.byte_length, self.rc_gl_buffer.borrow())
+        write!(
+            f,
+            "Data[{:?}+{}#{}]:GL({})",
+            data_ptr,
+            self.byte_offset,
+            self.byte_length,
+            self.rc_gl_buffer.borrow()
+        )
     }
 }
 
 //ip DefaultIndentedDisplay for Data
-impl <'a> indent_display::DefaultIndentedDisplay for Data<'a> {}
-
+impl<'a> indent_display::DefaultIndentedDisplay for Data<'a> {}

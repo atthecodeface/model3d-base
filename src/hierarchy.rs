@@ -1,21 +1,3 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    hierarchy.rs
-@brief   Hiearchy using usize indices to arrays of elements
- */
-
 //a Documentation
 /*!
 This module provides a hierarchy of nodes and iterators over them
@@ -50,7 +32,7 @@ where
     T: Clone + std::fmt::Debug,
 {
     fn clone(&self) -> Self {
-        let parent = self.parent.clone();
+        let parent = self.parent;
         let children = self.children.clone();
         let data = self.data.clone();
         Self {
@@ -99,7 +81,7 @@ where
     //mp has_children
     /// Return true if the node has children
     pub fn has_children(&self) -> bool {
-        self.children != []
+        !self.children.is_empty()
     }
 
     //zz All done
@@ -119,6 +101,18 @@ where
     /// The roots in the hierarchy - more than one tree can be stored
     /// in the hierarchy
     roots: Vec<usize>,
+}
+
+//ip Default for Hierarchy<T>
+impl<T> std::default::Default for Hierarchy<T>
+where
+    T: std::fmt::Debug,
+{
+    fn default() -> Self {
+        let elements = vec![];
+        let roots = vec![];
+        Self { elements, roots }
+    }
 }
 
 //ip Clone for Hierarchy<T:Clone>
@@ -147,10 +141,16 @@ where
         }
     }
 
-    //mp len
+    //ap len
     /// Return the number of elements in the hierarchy
     pub fn len(&self) -> usize {
         self.elements.len()
+    }
+
+    //ap is_empty
+    /// Return true if there are no elements
+    pub fn is_empty(&self) -> bool {
+        self.elements.is_empty()
     }
 
     //mp add_node
@@ -199,19 +199,19 @@ where
 
     //mp enum_from
     /// Enumerate the nodes from a particular node
-    pub fn enum_from<'z>(&'z self, node: usize) -> NodeEnum<T> {
+    pub fn enum_from(&self, node: usize) -> NodeEnum<T> {
         NodeEnum::new(&self.elements, node)
     }
 
     //mp iter_from
     /// Iterate the nodes from a particular node
-    pub fn iter_from<'z>(&'z self, node: usize) -> NodeIter<T> {
+    pub fn iter_from(&self, node: usize) -> NodeIter<T> {
         NodeIter::new(&self.elements, node)
     }
 
     //mp borrow_elements
     /// Borrow all the elements
-    pub fn borrow_elements<'z>(&'z self) -> &Vec<Node<T>> {
+    pub fn borrow_elements(&self) -> &Vec<Node<T>> {
         &self.elements
     }
 
@@ -242,7 +242,7 @@ where
                     match x {
                         NodeEnumOp::Push(x, _) => {
                             self.elements[x].data.indent(&mut sub)?;
-                            write!(sub, "\n")?;
+                            writeln!(sub)?;
                             sub = sub.sub();
                         }
                         NodeEnumOp::Pop(_, _) => {
@@ -266,22 +266,29 @@ where
 /// popped.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum NodeEnumOp<T> {
-    /// Pushing in to the hierachy to new node index, and true if node has children
+    /// Pushing in to the hierarchy to new node index, and true if node has children
     Push(T, bool),
-    /// Popping out to the hierachy to node index
+    /// Popping out to the hierarchy to node index
     Pop(T, bool),
 }
 
 //ip NodeEnumOp
 impl<T> NodeEnumOp<T> {
+    //mp unpack
+    /// Unpack the data
+    #[inline]
+    pub fn unpack(&self) -> (bool, &T, bool) {
+        match &self {
+            Self::Pop(d, c) => (false, d, *c),
+            Self::Push(d, c) => (true, d, *c),
+        }
+    }
+
     //mp is_pop
     /// Return true if this is a Pop, false if it is a Push
     #[inline]
     pub fn is_pop(&self) -> bool {
-        match self {
-            Self::Pop(_, _) => true,
-            _ => false,
-        }
+        matches!(self, Self::Pop(_, _))
     }
 
     //zz All done
@@ -301,7 +308,7 @@ pub struct Recipe {
     /// The maximum depth required (maximum 'tree' depth from the initial node)
     max_depth: usize,
     /// The current depth (used in generating the recipe)
-    depth: usize,
+    cur_depth: usize,
 }
 
 //ip Default for Recipe
@@ -319,7 +326,7 @@ impl Recipe {
         Self {
             ops: Vec::new(),
             max_depth: 0,
-            depth: 0,
+            cur_depth: 0,
         }
     }
 
@@ -327,11 +334,11 @@ impl Recipe {
     /// Add a new operation to the recipe
     pub fn add_op(&mut self, op: NodeEnumOp<usize>) {
         if op.is_pop() {
-            self.depth -= 1;
+            self.cur_depth -= 1;
         } else {
-            self.depth += 1;
-            if self.depth > self.max_depth {
-                self.max_depth = self.depth;
+            self.cur_depth += 1;
+            if self.cur_depth > self.max_depth {
+                self.max_depth = self.cur_depth;
             }
         }
         self.ops.push(op);
@@ -351,7 +358,7 @@ impl Recipe {
 
     //mp borrow_ops
     /// Borrow the operations that make the recipe
-    pub fn borrow_ops<'z>(&'z self) -> &'z Vec<NodeEnumOp<usize>> {
+    pub fn borrow_ops(&self) -> &Vec<NodeEnumOp<usize>> {
         &self.ops
     }
 
@@ -426,8 +433,7 @@ where
     //fp new
     /// Create a new hierarchy node iterator
     pub fn new(hierarchy: &'a [Node<T>], root: usize) -> Self {
-        let mut stack = Vec::new();
-        stack.push(NodeEnumState::PreNode(root));
+        let stack = vec![NodeEnumState::PreNode(root)];
         Self { hierarchy, stack }
     }
 }
@@ -439,7 +445,7 @@ where
 {
     type Item = NodeEnumOp<usize>;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.stack.len() == 0 {
+        if self.stack.is_empty() {
             None
         } else {
             let se = self.stack.pop().unwrap();

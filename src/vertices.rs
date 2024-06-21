@@ -1,21 +1,3 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    vertices.rs
-@brief   Part of 3d Model library
- */
-
 //a Imports
 use std::cell::{Ref, RefCell};
 
@@ -50,7 +32,23 @@ pub struct Vertices<'vertices, R: Renderable + ?Sized> {
     attrs: Vec<(VertexAttr, &'vertices BufferAccessor<'vertices, R>)>,
 }
 
-//ip Vertices
+//ip Display for Object
+impl<'vertices, R: Renderable> std::fmt::Display for Vertices<'vertices, R>
+where
+    R: Renderable,
+{
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        writeln!(fmt, "Vertices:")?;
+        writeln!(fmt, "  indices: {:?}", self.indices)?;
+        writeln!(fmt, "  position: {:?}", self.position)?;
+        for (n, a) in &self.attrs {
+            writeln!(fmt, "  {n:?}: {a:?}")?;
+        }
+        Ok(())
+    }
+}
+
+///ip Vertices
 impl<'vertices, R: Renderable> Vertices<'vertices, R> {
     //fp new
     /// Create a new [Vertices] object with no additional attributes
@@ -74,8 +72,12 @@ impl<'vertices, R: Renderable> Vertices<'vertices, R> {
     /// On creation the [Vertices] will have views for indices and
     /// positions; this provides a means to add views for things such
     /// as normal, tex coords, etc
-    pub fn add_attr(&mut self, attr: VertexAttr, view: &'vertices BufferAccessor<'vertices, R>) {
-        self.attrs.push((attr, view));
+    pub fn add_attr(
+        &mut self,
+        attr: VertexAttr,
+        accessor: &'vertices BufferAccessor<'vertices, R>,
+    ) {
+        self.attrs.push((attr, accessor));
     }
 
     //mp borrow_indices

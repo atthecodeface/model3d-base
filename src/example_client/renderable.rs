@@ -2,8 +2,8 @@
 use std::rc::Rc;
 
 use crate::{
-    BufferClient, BufferData, BufferAccessor, Material, MaterialClient, Renderable, TextureClient,
-    VertexAttr, Vertices, VerticesClient, AccessorClient,
+    AccessorClient, BufferAccessor, BufferClient, BufferData, Material, MaterialClient, Renderable,
+    TextureClient, VertexAttr, Vertices, VerticesClient,
 };
 
 //a Buffer
@@ -42,20 +42,13 @@ impl AccessorClient for Buffer {}
 /// The thing that is Renderable - pretty much a place-holder
 ///
 /// This is also used as a MaterialClient, TextureClient and VerticesClient
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Id(u32);
 
 //ip Display for Id
 impl std::fmt::Display for Id {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         write!(fmt, "{}", self.0)
-    }
-}
-
-//ip Default for Id
-impl Default for Id {
-    fn default() -> Self {
-        Self(0)
     }
 }
 

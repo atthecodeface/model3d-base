@@ -1,26 +1,12 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    lib.rs
-@brief   3D model library
- */
-
 //a Documentation
 #![warn(missing_docs)]
 #![warn(rustdoc::missing_doc_code_examples)]
 
 /*!
+# TODO
+
+Make Vertices have an option<indices> and update renderable vertices clients
+
 # 3D Model library
 
 This library provides structures and functions to support simple and
@@ -30,6 +16,65 @@ include 3D modeling tools, games, and 3D user interfaces.
 The object model is derived from the Khronos glTF 3D
 model/scene description (<https://github.com/KhronosGroup/glTF>),
 without explicit support for animation or cameras.
+
+## Overview of the model
+
+The 3D model library is designed to provide for the description of 3D
+objects with simple or sophisticated specifications of their vertices;
+with materials that might be simple colors or complete PRBS
+specifications, and so on.
+
+Once models have been described they can be turned into GL-specific
+instantiable structures. It is quite common for graphics libraries to
+convert some external data form and to allocate internal memory for
+rendering - so that the object description buffers used initially are
+no longer required and their memory can be freed.
+
+When an 'instantiable' object exists it can be rendered many times in
+a single scene, with different transformations and skeleon poses.
+
+Hence this library provides for [Instantiable] object creation that
+first requires memory buffers to be allocated, descriptions of an
+object created; from this [Object] the [Instantiable] is made for a
+particular graphics library context - allowing the freeing of those
+firstt memory buffers. This [Instantiable] can then be instanced a
+number of times, and these [Instance] each have their own
+[Transformation] and [SkeletonPose].
+
+# Object creation
+
+The first step in using the library is to create the required
+[Object]. This requires some binary data buffer(s) containing float
+vertex data (position, and possible normals, texture coordinates,
+tangents, relevant bones and weights, and so on); also arrays of
+unsigned int vertex indices, that indicate how the vertices form
+strips of triangles, or lines, etc. In some applications this binary
+data might come from a large file, containing the data for many
+objecs; as such, different portions of the binary data contain
+different parts of the object data.
+
+The library requries that a data buffer support the [ByteBuffer]
+trait, and then that data buffer can have [BufferData] views created
+onto it - portions of the data buffer. For particular vertex data a
+subset of [BufferData] is used to create a [BufferAccessor].
+
+A number of [BufferData] are pulled together to produce a [Vertices]
+object - this might describe all the points and drawing indices for a
+complete object. Subsets of the [Vertices] object are combined with a
+[Material] to help describe a set of elements to render - this might
+be a TriangleStrip, for example - this is known as a [Primitive]
+
+A [Component] of an object is a list of [Primitive] and a
+[Transformation] (the list of [Primitive] is a [Mesh])
+
+An [Object] has a hierarchy of [Component], and optionally a
+[Skeleton]; it also must keep references to the data that it uses - so
+it contains arrays of [Vertices] and [Material] references.
+
+Note that the [Vertices] used by one object may be used by others; as
+such one might load a single data file that contains many objects for
+a game, and the objects all refer to the same buffers and even
+[Material] and [Vertices].
 
 ## Buffers
 
@@ -81,7 +126,7 @@ more than one [Vertices] object.
 
 ### [Vertices]
 
-The [Vertrices] type borrows at least one [BufferAccessor] for a vertex
+The [Vertices] type borrows at least one [BufferAccessor] for a vertex
 indices buffer, and at least one [BufferAccessor] for positions of the
 vertices; in addition it borrows more [BufferAccessor], one for each
 attribute [VertexAttr] that is part of a mesh or set of meshes.
@@ -91,13 +136,24 @@ of a model or set of models within one or more [ByteBuffer]. In OpenGL
 a Vertices object becomes a set of OpenGL Buffers (and subsets
 thereof) and for a particular shader class it can be bound into a VAO.
 
+A [Vertices] object is a set of related [BufferAccessor]s, with at least a
+view for indices and a view for vertex positions; it may have more
+views for additional attributes. It has a lifetime that is no longer
+than that of the [BufferData] from which the [BufferAccessor]s are made.
+
+A [Renderable::Vertices] can be constructed from a [Vertices]; this
+is a renderer-specific vertices instance that replaces the use of
+[BufferAccessor]s with the underlying client types.
+
 ## Skeleton and posing
 
-A [Skeleton] consists of hierarchies of [Bone]s. Each bone has a
-[Transformation], which is the maaping from the coordinate space of
-its parent to the coordinate space of the bone itself.
+A [Skeleton] consists of a (possibly multi-rooted) hierarchy of
+[Bone]s. Each bone has a [Transformation], which is the mapping from
+the coordinate space of its parent to the coordinate space of the bone
+itself.
 
-A [Skeleton] can be applied to one or more instantiable objects; the nodes
+Each [Bone] has a 'matrix_index' which indicates which 'Joints' matrix
+the bone is referred to by any 'joint's attribute entry in a mesh.
 
 An object instance will have a [SkeletonPose] associated with it; this
 allows the object contents to be rendered with adjustments to the
@@ -113,6 +169,30 @@ mesh-to-model-space matrices of the bones times their weights times
 the mesh vertex coordinate.
 
 A [Skeleton] is similar to a `skin` in GLTF.
+
+/// Each bone has a transformation with respect to its parent that is
+/// a translation (its origin relative to its parent origin), scale
+/// (in each direction, although a common scale for each coordinates
+/// is best), and an orientation of its contents provided by a
+/// quaternion (as a rotation).
+///
+/// A point in this bone's space is then translate(rotate(scale(pt)))
+/// in its parent's space. The bone's children start with this
+/// transformation too.
+///
+/// From this the bone has a local bone-to-parent transform matrix
+/// and it has a local parent-to-bone transform matrix
+///
+/// At rest (where a mesh is skinned) there are two rest matrix variants
+/// Hence bone_relative = ptb * parent_relative
+///
+/// The skinned mesh has points that are parent relative, so
+/// animated_parent_relative(t) = btp(t) * ptb * parent_relative(skinned)
+///
+/// For a chain of bones Root -> A -> B -> C:
+///  bone_relative = C.ptb * B.ptb * A.ptb * mesh
+///  root = A.btp * B.btp * C.btp * C_bone_relative
+///  animated(t) = A.btp(t) * B.btp(t) * C.btp(t) * C.ptb * B.ptb * A.ptb * mesh
 
 ## Materials
 
@@ -136,39 +216,45 @@ Example [Material] instances are:
 
 A [Material] has a make_renderable() method that makes it renderable?
 
-## Vertices
+## [Primitive]
 
-A [Vertices] object is a set of related [BufferAccessor]s, with at least a
-view for indices and a view for vertex positions; it may have more
-views for additional attributes. It has a lifetime that is no longer
-than that of the [BufferData] from which the [BufferAccessor]s are made.
-
-A [Renderable::Vertices] can be constructed from a [Vertices]; this
-is a renderer-specific vertices instance that replaces the use of
-[BufferAccessor]s with the underlying client types.
-
-## Object [Component]s
-
-A [Component] is part of the hierarchy of an [Object] and has no
-meaning without it; the indices and materials used in the [Component]
-are provided by the [Object]. The [Component] has a [Transformation]
-(relative to its parent) and a [Mesh].
-
-A [Mesh] contains an array of [Primitive]s
+A [Primitive] is a small structure that uses a single subset of
+[Vertices] with a [Material] wih a drawing type (such as
+TriangleStrip). It does not contain direct references to the vertices
+or material; rather it uses an index *within* the arrays of [Vertices]
+or [Material] held by an [Object].
 
 A [Primitive] contains:
 
-* a [Material] (from an index within the [Object])
+* a [Material] (from an index within the [Object] to which the primitive mesh belongs)
 
 * a set of [Vertices] - the attributes required by the [Mesh] and a
   set of indices, a subset of which are used by the [Primitive] (from
-  an index within the [Object])
+  an index within the [Object] to which the mesh belongs)
 
 * a drawable element type ([PrimitiveType] such as `TriangleStrip`)
 
 * an index offset (within the [Vertices] indices)
 
 * a number of indices
+
+A [Primitive] does *not* contain any transformation information - all
+the [Primitive] that belong to a [Mesh] have the same transformation.
+
+## [Mesh]
+
+A [Mesh] is an array of [Primitive]; this is just a way to combine sets
+of drawn elements, all using the same transformation (other than bone
+poses).
+
+A mesh is part of a [Component] that is part of an [Object].
+
+## [Component] of an Object
+
+A [Component] is part of the hierarchy of an [Object] and has no
+meaning without it; the indices and materials used in the [Component]
+are provided by the [Object]. The [Component] has a [Transformation]
+(relative to its parent) and a [Mesh].
 
 Note that a hierarchy of object [Component]s is implicitly
 `renderable` as it contains only indices, not actual references to
@@ -189,7 +275,24 @@ A hierarchy of object [Component]s can be reduced to a
 
 * index count (in a [Primitive])
 
-## Instantiable objects
+## [Object]
+
+An Object has an array of [Vertices] and [Materials] references that
+its meshes use; both of these will end up being mapped to arrays of
+graphic library client handles on a one-to-one basis (each [Vertices]
+in the array becomes a graphics library vertices client, for example).
+
+The Object then has a hierarchy of [Component]; this describes everything that it takes to draw the object.
+
+Additionally the Object has an optional [Skeleton].
+
+All of the data from an [Object] can be used to create an
+[Instantiable]; this latter does not refer to any of he data buffers
+(such as the [Vertices]) and so the original byte buffers can be
+dropped once an [Instantiable] exists - all the data will be in the
+graphics library.
+
+## [Instantiable] objects
 
 A 3D model [Object] consists of:
 
@@ -207,10 +310,24 @@ for use with different visualizers (in OpenGL these could be different
 shaders, for example).
 
 An object can be turned in to a renderable object within a
-Renderable::Context using the `create_client` method.  Once created
+Renderable::Context using the `into_instantiable` method.  Once created
 (unless the renderable context requires it) the object can be dropped.
 
-A renderable [Object] can then be drawn by
+The [Instantiable] is created within a specific renderable
+context. For simple graphics libraries this probably means that
+instances of the instantiated object are to be wih a single shader
+program, whose attribute layout an uniforms is known ahead of time. As
+such the renerable context might generate a single VAO for the
+instantiable with appropriate buffer bindings, at the
+into_instantiable invocation. For more complex applications, where an
+object may be rendered with more than one layout of attributes, with
+many different shader program classes, a VAO could be generated per
+shader program class and (e.g.) a 'bind vertex buffers' for the
+*object* can be invoked within a VAO prior to the rendering of a
+number of the instances of the object with the shader program (each
+presumably with its own 'uniform' settings!).
+
+An [Instantiable] can then be drawn by
 (theoretically, and given a particular [SkeletonPose]):
 
 * Generating the [BonePose] mesh-to-model-space matrices for each bone in the [Skeleton]
@@ -225,7 +342,7 @@ A renderable [Object] can then be drawn by
 
 ## Instantiated objects
 
-An instantiated object is created by instantiating an [Object].
+An instantiated object is created by instantiating an [Instantiable].
 
 The [Instance] has a [Transformation], a [SkeletonPose], and a set of
 [Material] overrides; the [Material] overrides are an array of
@@ -310,6 +427,34 @@ immutably interrogated - although the immutability refers to the
 *hierarchy* and the *node array*, not the contents of the nodes - the
 node content may be updated at will.
 
+# Graphics libraries
+
+In OpenGL we have
+
+VAO = list of binding from VAO attr number to a buffer; it also has an
+'elemeent array buffer' that is the buffer of indices. Note a buffer
+here is an offset/stride of a gl buffer.
+
+The VAO is specific to the shader class, as it uses the attribute locations of the shader
+
+A VAO can have the attribute bbuffers bound iini one go with glBindVertexBuffers (or glVertexArrayVertexBuffers to specify the vao without binding it first),
+
+The index buffer can be bound witth glBindElementBuffer.
+
+In theory a single VAO can work for many objects with one shader class
+as the attribute layour is specific o the shader class. This requires
+all its buffers to be rebound and the element buffer to be rebound. So it keeps some of the VAO.
+
+Uniforms must be set after useProgram
+
+A VBO glBuffer can be a BufferData; an Accessor is the glBuffer with offset and stride.
+
+## OpenGL 4.0
+
+Program has id; attribute list of (AttribLocation, VertexAttr); uniform list of (UniformLocation, UniformId).
+
+UniformId is either ViewMatrix, ModelMatrix, etc, User(x), or Buffer(x)
+
 # Examples
 
 use model3d::{BufferAccessor, MaterialAspect};
@@ -359,16 +504,17 @@ mod skeleton_pose;
 pub use skeleton::Skeleton;
 pub use skeleton_pose::SkeletonPose;
 
-mod buffer_data;
 mod buffer_accessor;
+mod buffer_data;
 mod byte_buffer;
-pub use buffer_data::BufferData;
 pub use buffer_accessor::BufferAccessor;
+pub use buffer_data::BufferData;
 pub use byte_buffer::ByteBuffer;
 
 mod traits;
 pub use traits::{
-    BufferClient, Material, MaterialClient, Renderable, TextureClient, VerticesClient, AccessorClient,
+    AccessorClient, BufferClient, Material, MaterialClient, Renderable, TextureClient,
+    VerticesClient,
 };
 mod material;
 pub use material::BaseData as MaterialBaseData;

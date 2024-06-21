@@ -9,7 +9,10 @@ This provides a function to create [ExampleVertices] object that is a triangle o
 use super::ExampleVertices;
 use crate::{BufferElementType, Mesh, Primitive, PrimitiveType, Renderable, VertexAttr};
 
-/// Add new position, normal and indices views to an [ExampleVertices] for  a tetrahedron at z=0.
+/// Add new position, normal and indices views to an [ExampleVertices]
+/// for a tetrahedron with base at z=0 and tip at (0, 0, size)
+///
+/// The bottom plane is reflectionallty symmetric about the X axis
 ///
 /// This has four vertices with a normal at each that is directed away
 /// from the centroid
@@ -27,7 +30,7 @@ use crate::{BufferElementType, Mesh, Primitive, PrimitiveType, Renderable, Verte
 /// The other tips at Z=0 are then at
 ///  X = -1/3 * sqrt(3)/2 * size = -size / (2*sqrt(3))
 ///  Y = +- size/2
-pub fn new<'a, R: Renderable>(eg: &mut ExampleVertices<'a, R>, size: f32) {
+pub fn new<R: Renderable>(eg: &mut ExampleVertices<R>, size: f32) {
     let height = (2.0_f32 / 3.0).sqrt();
     let centroid = height / 4.0;
     let r3_2 = (3.0_f32).sqrt() * 0.5;
@@ -61,12 +64,12 @@ pub fn new<'a, R: Renderable>(eg: &mut ExampleVertices<'a, R>, size: f32) {
     ];
     let index_data = [0u8, 1, 2, 3, 0, 1];
 
-    let data_indices = eg.push_data(Box::pin(index_data));
-    let data_vertices = eg.push_data(Box::pin(vertex_data));
+    let data_indices = eg.push_byte_buffer(Box::new(index_data));
+    let data_vertices = eg.push_byte_buffer(Box::new(vertex_data));
 
-    let indices = eg.push_view(data_indices, 6, BufferElementType::Int8, 0, 0);
-    let normals = eg.push_view(data_vertices, 3, BufferElementType::Float32, 3 * 4, 6 * 4);
-    let vertices = eg.push_view(data_vertices, 3, BufferElementType::Float32, 0, 6 * 4);
+    let indices = eg.push_accessor(data_indices, 6, BufferElementType::Int8, 0, 0);
+    let normals = eg.push_accessor(data_vertices, 3, BufferElementType::Float32, 3 * 4, 6 * 4);
+    let vertices = eg.push_accessor(data_vertices, 3, BufferElementType::Float32, 0, 6 * 4);
 
     // Create set of data (indices, vertex data) to by subset into by the meshes and their primitives
     eg.push_vertices(indices, vertices, &[(VertexAttr::Normal, normals)]);

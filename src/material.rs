@@ -134,7 +134,7 @@ impl BaseMaterial {
 
 //ip Material for BaseMaterial
 impl<R: Renderable> Material<R> for BaseMaterial {
-    fn borrow_base_data(&self) -> &BaseData {
+    fn base_data(&self) -> &BaseData {
         &self.base_data
     }
 }
@@ -151,11 +151,13 @@ pub struct TexturedMaterial<R: Renderable> {
 
 //ip Material for TexturedMaterial
 impl<R: Renderable> Material<R> for TexturedMaterial<R> {
-    fn borrow_base_data(&self) -> &BaseData {
+    //ap base_data
+    fn base_data(&self) -> &BaseData {
         &self.base_data
     }
 
-    fn borrow_texture(&self, aspect: MaterialAspect) -> Option<&R::Texture> {
+    //ap tetxture
+    fn texture(&self, aspect: MaterialAspect) -> Option<&R::Texture> {
         use MaterialAspect::*;
         #[allow(unreachable_patterns)]
         match aspect {
@@ -182,6 +184,13 @@ pub struct PbrMaterial<R: Renderable> {
     emission_texture: Option<R::Texture>,
 }
 
+//ip Default for PbrMaterial
+impl<R: Renderable> Default for PbrMaterial<R> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 //ip PbrMaterial
 impl<R: Renderable> PbrMaterial<R> {
     /// Create a new PBR material
@@ -199,11 +208,11 @@ impl<R: Renderable> PbrMaterial<R> {
 
 //ip Material for PbrMaterial
 impl<R: Renderable> Material<R> for PbrMaterial<R> {
-    fn borrow_base_data(&self) -> &BaseData {
+    fn base_data(&self) -> &BaseData {
         &self.base_data
     }
 
-    fn borrow_texture(&self, aspect: MaterialAspect) -> Option<&R::Texture> {
+    fn texture(&self, aspect: MaterialAspect) -> Option<&R::Texture> {
         use MaterialAspect::*;
         #[allow(unreachable_patterns)]
         match aspect {

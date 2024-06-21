@@ -1,25 +1,3 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    bezier.rs
-@brief   Part of geometry library
- */
-
-//a Notes
-//
-//
-
 //a Imports
 use std::cell::RefCell;
 
@@ -32,13 +10,12 @@ use crate::{BufferData, BufferElementType, Renderable, VertexAttr};
 ///
 /// A `BufferAccessor` is used for a single attribute of a set of data, such as
 /// Position or Normal.
-#[derive(Debug)]
 pub struct BufferAccessor<'a, R: Renderable + ?Sized> {
     /// The `BufferData` that contains the actual vertex attribute data
     pub data: &'a BufferData<'a, R>,
-    /// For attributes: number of elements per vertex (1 to 4)
+    /// For attributes: number of elements per vertex (1 to 4, or 4, 9 or 16)
     /// For indices: number of indices in the buffer
-    pub count: u32,
+    pub elements_per_data: u32,
     /// The type of each element
     ///
     /// For indices this must be Int8, Int16 or Int32
@@ -57,6 +34,28 @@ pub struct BufferAccessor<'a, R: Renderable + ?Sized> {
     rc_client: RefCell<R::Accessor>,
 }
 
+//ip Display for Object
+impl<'a, R: Renderable> std::fmt::Debug for BufferAccessor<'a, R>
+where
+    R: Renderable,
+{
+    fn fmt(
+        &self,
+        fmt: &mut std::fmt::Formatter<'_>,
+    ) -> Result<(), std::fmt::Error> {
+        write!(
+            fmt,
+            "BufferAccessor{{ {:?}:{:?} #{}@{}+*{}}}",
+            self.data,
+            self.ele_type,
+            self.elements_per_data,
+            self.byte_offset,
+            self.stride,
+            //  self.rc_client
+        )
+    }
+}
+
 //ip BufferAccessor
 impl<'a, R: Renderable> BufferAccessor<'a, R> {
     //fp new
@@ -65,13 +64,14 @@ impl<'a, R: Renderable> BufferAccessor<'a, R> {
         data: &'a BufferData<'a, R>,
         count: u32, // count is number of ele_type in an attribute
         ele_type: BufferElementType,
-        byte_offset: u32, // offset in bytes?
-        stride: u32,      // stride between elements (0->count*sizeof(ele_type))
+        byte_offset: u32, // offset in bytes from start of data
+        stride: u32,      /* stride between elements
+                           * (0->count*sizeof(ele_type)) */
     ) -> Self {
         let rc_client = RefCell::new(R::Accessor::default());
         Self {
             data,
-            count,
+            elements_per_data: count,
             ele_type,
             byte_offset,
             stride,
@@ -83,7 +83,11 @@ impl<'a, R: Renderable> BufferAccessor<'a, R> {
     /// Create the render buffer required by the BufferAccessor
     pub fn create_client(&self, attr: VertexAttr, renderable: &mut R) {
         use std::ops::DerefMut;
-        renderable.init_buffer_view_client(self.rc_client.borrow_mut().deref_mut(), self, attr);
+        renderable.init_buffer_view_client(
+            self.rc_client.borrow_mut().deref_mut(),
+            self,
+            attr,
+        );
     }
 
     //ap borrow_client
@@ -101,10 +105,17 @@ impl<'a, R: Renderable> std::fmt::Display for BufferAccessor<'a, R> {
         write!(
             f,
             "BufferAccessor[{:?}#{}]\n  {}+{}+n*{}\n",
-            self.ele_type, self.count, self.data, self.byte_offset, self.stride
+            self.ele_type,
+            self.elements_per_data,
+            self.data,
+            self.byte_offset,
+            self.stride
         )
     }
 }
 
 //ip DefaultIndentedDisplay for BufferAccessor
-impl<'a, R: Renderable> indent_display::DefaultIndentedDisplay for BufferAccessor<'a, R> {}
+impl<'a, R: Renderable> indent_display::DefaultIndentedDisplay
+    for BufferAccessor<'a, R>
+{
+}

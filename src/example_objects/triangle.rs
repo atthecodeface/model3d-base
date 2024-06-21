@@ -11,18 +11,18 @@ use crate::{BufferElementType, Mesh, Primitive, PrimitiveType, Renderable, Verte
 
 /// Add positions, normals and indices to an [ExampleVertices] for a
 /// flat upward-facing triangle on z=0 of a given size
-pub fn new<'a, R: Renderable>(eg: &mut ExampleVertices<'a, R>, size: f32) {
+pub fn new<R: Renderable>(eg: &mut ExampleVertices<R>, size: f32) {
     let vertex_data = [
         -size, -size, 0.0, size, -size, 0.0, 0.0, size, 0.0, 0., 0., 1., 0., 0., 1., 0., 0., 1.,
     ];
     let index_data = [0u8, 1, 2];
 
-    let data_vertices = eg.push_data(Box::pin(vertex_data));
-    let data_indices = eg.push_data(Box::pin(index_data));
+    let data_vertices = eg.push_byte_buffer(Box::new(vertex_data));
+    let data_indices = eg.push_byte_buffer(Box::new(index_data));
 
-    let indices = eg.push_view(data_indices, 3, BufferElementType::Int8, 0, 0);
-    let vertices = eg.push_view(data_vertices, 3, BufferElementType::Float32, 0, 0);
-    let normals = eg.push_view(data_vertices, 3, BufferElementType::Float32, 9 * 4, 0);
+    let indices = eg.push_accessor(data_indices, 3, BufferElementType::Int8, 0, 0);
+    let vertices = eg.push_accessor(data_vertices, 3, BufferElementType::Float32, 0, 0);
+    let normals = eg.push_accessor(data_vertices, 3, BufferElementType::Float32, 9 * 4, 0);
 
     // Create set of data (indices, vertex data) to by subset into by the meshes and their primitives
     eg.push_vertices(indices, vertices, &[(VertexAttr::Normal, normals)]);

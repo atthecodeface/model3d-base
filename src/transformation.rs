@@ -19,11 +19,8 @@ pub struct Transformation {
     scale: Vec3,
 }
 
-//ip Transformation
-impl Transformation {
-    //fp new
-    /// Create a new identity transformation
-    pub fn new() -> Self {
+impl std::default::Default for Transformation {
+    fn default() -> Self {
         let translation = vector::zero();
         let scale = [1.; 3];
         let rotation = quat::new();
@@ -32,6 +29,15 @@ impl Transformation {
             scale,
             rotation,
         }
+    }
+}
+
+//ip Transformation
+impl Transformation {
+    //fp new
+    /// Create a new identity transformation
+    pub fn new() -> Self {
+        Default::default()
     }
 
     //cp set_scale
@@ -58,9 +64,9 @@ impl Transformation {
     //cp copy_from
     /// Copy the transformation from another
     pub fn copy_from(&mut self, other: &Self) {
-        self.translation = other.translation.clone();
-        self.scale = other.scale.clone();
-        self.rotation = other.rotation.clone();
+        self.translation = other.translation;
+        self.scale = other.scale;
+        self.rotation = other.rotation;
     }
 
     //mp combine
@@ -69,7 +75,7 @@ impl Transformation {
     /// To operate correctly the scales must be
     pub fn combine(&mut self, base: &Self, other: &Self) {
         self.rotation = quat::multiply(&base.rotation, &other.rotation);
-        self.translation = base.translation.clone();
+        self.translation = base.translation;
         self.translation = vector::add(self.translation, &other.translation, 1.);
         for i in 0..3 {
             self.scale[i] = base.scale[i] * other.scale[i];
@@ -102,7 +108,7 @@ impl Transformation {
     pub fn mat4(&self) -> Mat4 {
         let mut m = matrix::from_quat4(self.rotation);
         for i in 0..3 {
-            m[4 * i + 0] *= self.scale[i];
+            m[4 * i] *= self.scale[i];
             m[4 * i + 1] *= self.scale[i];
             m[4 * i + 2] *= self.scale[i];
         }
@@ -119,7 +125,7 @@ impl Transformation {
         let mut m = matrix::from_quat4(r);
         for i in 0..3 {
             let sc = 1. / self.scale[i];
-            m[i + 0] *= sc;
+            m[i] *= sc;
             m[i + 4] *= sc;
             m[i + 8] *= sc;
         }
@@ -135,10 +141,10 @@ impl Transformation {
         self.translation = [m[12], m[13], m[14]];
         let mut rotation = [0.; 9];
         for i in 0..3 {
-            let v = [m[4 * i + 0], m[4 * i + 1], m[4 * i + 2]];
+            let v = [m[4 * i], m[4 * i + 1], m[4 * i + 2]];
             let l = vector::length(&v);
             self.scale[i] = l;
-            rotation[3 * i + 0] = v[0] / l;
+            rotation[3 * i] = v[0] / l;
             rotation[3 * i + 1] = v[1] / l;
             rotation[3 * i + 2] = v[2] / l;
         }
@@ -169,7 +175,7 @@ impl Transformation {
         let td = vector::distance(&self.translation, &other.translation);
         let sd = vector::distance(&self.scale, &other.scale);
         let qd = quat::distance(&self.rotation, &other.rotation);
-        return td + sd + qd;
+        td + sd + qd
     }
     //zz All done
 }
