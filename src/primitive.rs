@@ -1,5 +1,5 @@
 //a Imports
-use crate::PrimitiveType;
+use crate::{PrimitiveType, ShortIndex};
 
 //a Primitive
 //tp Primitive
@@ -19,18 +19,20 @@ use crate::PrimitiveType;
 /// index type (u8, u16, u32) - is this part of indices?
 #[derive(Debug, Clone)]
 pub struct Primitive {
-    /// First index to use
+    /// Byte offset to first index to use
     ///
-    /// If all 1s then vertices_index is invalid?
-    index_offset: u32,
+    /// If vertices_index is None then the first PrimitiveType to draw in the array
+    byte_offset: u32,
     /// Number of indices to use
     index_count: u32,
     /// Material to be used in drawing - index within the [crate::Object]
-    material_index: u16,
+    material_index: ShortIndex,
     /// Vertices index within the [crate::Object]
     ///
     /// This provides (effectively) the set of attribute `BufferView`s that the mesh utilizes
-    vertices_index: u16,
+    ///
+    /// May be 'None'
+    vertices_index: ShortIndex,
     /// Type of the primitive (u8)
     primitive_type: PrimitiveType,
 }
@@ -43,15 +45,13 @@ impl Primitive {
     /// use the indices' BufferView.ele_type: BufferElementType as index size
     pub fn new(
         primitive_type: PrimitiveType,
-        vertices_index: usize,
-        index_offset: u32,
+        vertices_index: ShortIndex,
+        byte_offset: u32,
         index_count: u32,
-        material_index: usize,
+        material_index: ShortIndex,
     ) -> Self {
-        let material_index = material_index as u16;
-        let vertices_index = vertices_index as u16;
         Self {
-            index_offset,
+            byte_offset,
             index_count,
             material_index,
             vertices_index,
@@ -64,10 +64,10 @@ impl Primitive {
     ///
     /// This is the vertices index, the offset index, and the count
     #[inline]
-    pub fn vertices(&self) -> (usize, u32, u32) {
+    pub fn vertices(&self) -> (Option<usize>, u32, u32) {
         (
-            self.vertices_index as usize,
-            self.index_offset,
+            self.vertices_index.into(),
+            self.byte_offset,
             self.index_count,
         )
     }
@@ -75,8 +75,8 @@ impl Primitive {
     //mp material
     /// Retrieve the material for the primitive - this is the material index
     #[inline]
-    pub fn material(&self) -> usize {
-        self.material_index as usize
+    pub fn material(&self) -> ShortIndex {
+        self.material_index as ShortIndex
     }
 
     //mp primitive_type
@@ -89,15 +89,15 @@ impl Primitive {
     //mp vertices_index
     /// Retrieve the index into the [crate::Object] vertices array that this
     /// primitive uses
-    pub fn vertices_index(&self) -> usize {
-        self.vertices_index as usize
+    pub fn vertices_index(&self) -> ShortIndex {
+        self.vertices_index
     }
 
     //mp material_index
     /// Retrieve the index into the [crate::Object] materials array that this
     /// primitive uses
-    pub fn material_index(&self) -> usize {
-        self.material_index as usize
+    pub fn material_index(&self) -> ShortIndex {
+        self.material_index
     }
 
     //mp index_count
@@ -108,9 +108,9 @@ impl Primitive {
 
     //mp byte_offset
     /// Get the byte offset within the indices buffer view to the
-    /// first index used by this primitive
-    pub fn byte_offset(&self) -> usize {
-        self.index_offset as usize
+    /// first byte used by this primitive
+    pub fn byte_offset(&self) -> u32 {
+        self.byte_offset
     }
 
     //zz All done

@@ -2,7 +2,8 @@
 use std::cell::RefCell;
 
 use crate::{
-    BufferAccessor, BufferData, BufferElementType, ByteBuffer, Renderable, VertexAttr, Vertices,
+    BufferAccessor, BufferData, BufferElementType, ByteBuffer, Renderable, ShortIndex, VertexAttr,
+    Vertices,
 };
 
 //a ExampleBuffers
@@ -180,7 +181,7 @@ impl<'a, R: Renderable> ExampleVertices<'a, R> {
         indices: usize,
         positions: usize,
         attrs: &[(VertexAttr, usize)],
-    ) -> usize {
+    ) -> ShortIndex {
         let n = self.vertices.len();
         let i = self.accessors.accessor(indices);
         let v = self.accessors.accessor(positions);
@@ -190,12 +191,12 @@ impl<'a, R: Renderable> ExampleVertices<'a, R> {
             vertices.add_attr(*attr, v);
         }
         self.vertices.push(vertices);
-        n
+        n.into()
     }
 
     //fp borrow_vertices
     /// Borrow a set of vertices; this would allow (if mut!) the vertices to have attributes added
-    pub fn borrow_vertices(&self, vertices: usize) -> &Vertices<R> {
-        &self.vertices[vertices]
+    pub fn borrow_vertices(&self, vertices: ShortIndex) -> &Vertices<R> {
+        &self.vertices[vertices.as_usize()]
     }
 }

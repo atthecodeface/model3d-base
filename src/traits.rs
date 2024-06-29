@@ -1,5 +1,5 @@
-use crate::{BufferAccessor, BufferData, VertexAttr, Vertices};
-use crate::{MaterialAspect, MaterialBaseData};
+use crate::{BufferAccessor, BufferData, Texture, VertexAttr, Vertices};
+use crate::{MaterialAspect, MaterialBaseData, ShortIndex};
 
 //a BufferClient
 //tt BufferClient
@@ -30,14 +30,17 @@ pub trait AccessorClient:
 
 //tt TextureClient
 /// The trait that must be supported by a client texture
-pub trait TextureClient: Sized + std::fmt::Debug + Clone {}
+///
+/// Default is required as the client is made when a texture is made
+/// Clone is required as the client is textures are cloned
+pub trait TextureClient: Sized + std::fmt::Debug + std::default::Default + Clone {}
 
 //tt MaterialClient
 /// Trait supported by a material client
-pub trait MaterialClient:
-    Sized + std::fmt::Display + std::fmt::Debug + std::default::Default + Clone
-{
-}
+///
+/// Default is not required as materials are only created in response
+/// to a crate::Material
+pub trait MaterialClient: Sized + std::fmt::Display + std::fmt::Debug {}
 
 //tt VerticesClient
 /// The trait that must be supported by a client vertices
@@ -85,12 +88,24 @@ pub trait Renderable: Sized {
         buffer_view: &BufferAccessor<Self>,
         attr: VertexAttr,
     );
-    /// Create a client for a reason - reason 0 is reserved
-    fn init_material_client(&mut self, client: &mut Self::Material, material: &dyn Material<Self>);
-    // Destroy a client given a reason - reason 0 implies all
-    // fn drop_material_client(&mut self, material: &dyn Material<Self>, render_context: &mut Self::Context);
     /// Create a client
     fn create_vertices_client(&mut self, vertices: &Vertices<Self>) -> Self::Vertices;
+    /// Create a client
+    fn create_texture_client(&mut self, texture: &Texture<Self>) -> Self::Texture;
+    /// Create a client
+    fn create_material_client<M>(
+        &mut self,
+        object: &crate::Object<M, Self>,
+        material: &M,
+    ) -> Self::Material
+    where
+        M: Material;
+
+    /// Create a client for a reason - reason 0 is reserved
+    /// Can we lose this?
+    fn init_material_client<M: Material>(&mut self, client: &mut Self::Material, material: &M);
+    // Destroy a client given a reason - reason 0 implies all
+    // fn drop_material_client(&mut self, material: &dyn Material<Self>, render_context: &mut Self::Context);
 }
 
 //tt Material
@@ -98,15 +113,15 @@ pub trait Renderable: Sized {
 /// it simple of full PBR. A fragment shader may require some aspects
 /// of a material to be provided to it for rendering, and this API
 /// allows that information to be gathered from any kind of material
-pub trait Material<R: Renderable> {
+pub trait Material: std::fmt::Debug {
     /// Invoked when an 3D model object is made renderable
     // fn create_renderable(&self, _render_context: &mut R::Context) {}
 
     /// Borrow the basic data of a material - color and base
     /// metallic/roughness, for example
     fn base_data(&self) -> &MaterialBaseData;
-    /// Borrow the texture ID associated with an aspect
-    fn texture(&self, _aspect: MaterialAspect) -> Option<&R::Texture> {
-        None
+    /// Get the index into the Textures array for a specific aspect
+    fn texture(&self, _aspect: MaterialAspect) -> ShortIndex {
+        ShortIndex::none()
     }
 }

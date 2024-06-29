@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use crate::{
     AccessorClient, BufferAccessor, BufferClient, BufferData, Material, MaterialClient, Renderable,
-    TextureClient, VertexAttr, Vertices, VerticesClient,
+    Texture, TextureClient, VertexAttr, Vertices, VerticesClient,
 };
 
 //a Buffer
@@ -83,10 +83,18 @@ impl Renderable for Id {
     fn create_vertices_client(&mut self, _vertices: &Vertices<Self>) -> Self::Vertices {
         Self::Vertices::default()
     }
-    fn init_material_client(
-        &mut self,
-        _client: &mut Self::Material,
-        _material: &dyn Material<Self>,
-    ) {
+    fn create_texture_client(&mut self, _vertices: &Texture<Self>) -> Self::Texture {
+        Self::Texture::default()
     }
+    fn create_material_client<M>(
+        &mut self,
+        _object: &crate::Object<M, Self>,
+        _material: &M,
+    ) -> Self::Material
+    where
+        M: Material,
+    {
+        Self::Material::default()
+    }
+    fn init_material_client<M: Material>(&mut self, _client: &mut Self::Material, _material: &M) {}
 }

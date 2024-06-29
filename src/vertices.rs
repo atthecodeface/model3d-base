@@ -32,7 +32,7 @@ pub struct Vertices<'vertices, R: Renderable + ?Sized> {
     attrs: Vec<(VertexAttr, &'vertices BufferAccessor<'vertices, R>)>,
 }
 
-//ip Display for Object
+//ip Display for Vertices
 impl<'vertices, R: Renderable> std::fmt::Display for Vertices<'vertices, R>
 where
     R: Renderable,

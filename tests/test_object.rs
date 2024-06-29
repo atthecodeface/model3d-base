@@ -1,4 +1,5 @@
 use model3d_base::example_client::Renderable;
+use model3d_base::Material;
 use model3d_base::{BufferAccessor, MaterialAspect};
 
 // Create an object and interrogate it
@@ -10,16 +11,17 @@ fn test0() {
     model3d_base::example_objects::triangle::new::<Renderable>(&mut triangle, 0.5);
 
     // Using the set of indices/vertex data defined create primitives (a triangle)
-    let material = model3d_base::BaseMaterial::rgba((1., 0., 0., 1.));
-    let mut obj: model3d_base::Object<Renderable> = model3d_base::Object::new();
-    let v_id = obj.add_vertices(triangle.borrow_vertices(0));
+    let material = model3d_base::BaseMaterial::of_rgba(0xff0000ff);
+    let mut obj: model3d_base::Object<model3d_base::BaseMaterial, Renderable> =
+        model3d_base::Object::new();
+    let v_id = obj.add_vertices(triangle.borrow_vertices(0.into()));
     let m_id = obj.add_material(&material);
     let mesh = model3d_base::example_objects::triangle::mesh(v_id, m_id);
     obj.add_component(None, None, mesh);
     obj.analyze();
     let x = obj.vertices(v_id).borrow_client();
     let _p: &BufferAccessor<Renderable> = obj.vertices(v_id).borrow_indices();
-    let _p: Option<&Renderable> = obj.material(m_id).texture(MaterialAspect::Normal);
+    let _p = obj.material(m_id).texture(MaterialAspect::Normal);
 
     drop(x); // so we can desconstruct obj
     let inst = obj

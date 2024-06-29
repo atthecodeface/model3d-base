@@ -2,7 +2,7 @@
 use crate::hierarchy;
 use hierarchy::Hierarchy;
 
-use crate::{Component, Instance, Material, RenderRecipe, Renderable, Skeleton, Vertices};
+use crate::{Component, Instance, Material, RenderRecipe, Renderable, Skeleton, Texture, Vertices};
 
 //a Instantiable
 //tp Instantiable
@@ -30,8 +30,10 @@ where
     pub skeleton: Option<Skeleton>,
     /// All the vertices used
     pub vertices: Vec<R::Vertices>,
+    /// All the textures used
+    pub textures: Vec<R::Texture>,
     /// All the materials used
-    // pub materials : Vec<&'a dyn Material<R>>,
+    pub materials: Vec<R::Material>,
     /// Render recipe
     pub render_recipe: RenderRecipe,
     /// Number of bone matrices required for all the bone sets in this structure
@@ -51,10 +53,11 @@ where
     /// Such a type can that be 'instance'd with a specific
     /// transformation and bone poses, and such instances can then be
     /// drawn using shaders.
-    pub fn new(
+    pub fn new<M: Material>(
         skeleton: Option<Skeleton>,
         vertices: Vec<&Vertices<R>>,
-        _materials: Vec<&dyn Material<R>>,
+        textures: Vec<&Texture<R>>,
+        materials: Vec<R::Material>,
         mut components: Hierarchy<Component>,
     ) -> Self {
         components.find_roots();
@@ -62,14 +65,17 @@ where
         let num_bone_matrices = 0;
         let vertices = vertices
             .into_iter()
-            .map(|v| {
-                println!("{v}");
-                v.borrow_client().clone()
-            })
+            .map(|v| v.borrow_client().clone())
+            .collect();
+        let textures = textures
+            .into_iter()
+            .map(|t| t.borrow_client().clone())
             .collect();
         Self {
             skeleton,
             vertices,
+            textures,
+            materials,
             render_recipe,
             num_bone_matrices,
         }

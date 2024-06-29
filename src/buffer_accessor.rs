@@ -39,10 +39,7 @@ impl<'a, R: Renderable> std::fmt::Debug for BufferAccessor<'a, R>
 where
     R: Renderable,
 {
-    fn fmt(
-        &self,
-        fmt: &mut std::fmt::Formatter<'_>,
-    ) -> Result<(), std::fmt::Error> {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             fmt,
             "BufferAccessor{{ {:?}:{:?} #{}@{}+*{}}}",
@@ -83,11 +80,7 @@ impl<'a, R: Renderable> BufferAccessor<'a, R> {
     /// Create the render buffer required by the BufferAccessor
     pub fn create_client(&self, attr: VertexAttr, renderable: &mut R) {
         use std::ops::DerefMut;
-        renderable.init_buffer_view_client(
-            self.rc_client.borrow_mut().deref_mut(),
-            self,
-            attr,
-        );
+        renderable.init_buffer_view_client(self.rc_client.borrow_mut().deref_mut(), self, attr);
     }
 
     //ap borrow_client
@@ -105,17 +98,10 @@ impl<'a, R: Renderable> std::fmt::Display for BufferAccessor<'a, R> {
         write!(
             f,
             "BufferAccessor[{:?}#{}]\n  {}+{}+n*{}\n",
-            self.ele_type,
-            self.elements_per_data,
-            self.data,
-            self.byte_offset,
-            self.stride
+            self.ele_type, self.elements_per_data, self.data, self.byte_offset, self.stride
         )
     }
 }
 
 //ip DefaultIndentedDisplay for BufferAccessor
-impl<'a, R: Renderable> indent_display::DefaultIndentedDisplay
-    for BufferAccessor<'a, R>
-{
-}
+impl<'a, R: Renderable> indent_display::DefaultIndentedDisplay for BufferAccessor<'a, R> {}

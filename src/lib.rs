@@ -194,6 +194,14 @@ A [Skeleton] is similar to a `skin` in GLTF.
 ///  root = A.btp * B.btp * C.btp * C_bone_relative
 ///  animated(t) = A.btp(t) * B.btp(t) * C.btp(t) * C.ptb * B.ptb * A.ptb * mesh
 
+## Textxures
+
+A texture is a 1D, 2D or 3D object that is indexed by a shader to
+provide one of a scalar, vec2, vec3 or vec4 of byte, short, integer,
+or float.
+
+
+
 ## Materials
 
 Materials are types that have the [Material] trait, and which have the
@@ -209,8 +217,6 @@ permits different abstract shading models to be used. It has a
 Example [Material] instances are:
 
 * [BaseMaterial] -
-
-* [TexturedMaterial] -
 
 * [PbrMaterial] -
 
@@ -481,6 +487,7 @@ Make only part of an instantiable be drawn (have a Vec of RenderRecipes, one per
 mod types;
 pub use types::BufferElementType;
 pub use types::MaterialAspect;
+pub use types::ShortIndex;
 pub use types::{Mat3, Mat4, Quat, Vec3, Vec4};
 pub use types::{PrimitiveType, VertexAttr};
 
@@ -516,9 +523,13 @@ pub use traits::{
     AccessorClient, BufferClient, Material, MaterialClient, Renderable, TextureClient,
     VerticesClient,
 };
+
+mod texture;
+pub use texture::Texture;
+
 mod material;
 pub use material::BaseData as MaterialBaseData;
-pub use material::{BaseMaterial, PbrMaterial, TexturedMaterial};
+pub use material::{BaseMaterial, PbrMaterial};
 
 mod vertices;
 pub use vertices::Vertices;

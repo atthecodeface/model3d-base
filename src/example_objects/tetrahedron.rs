@@ -7,7 +7,9 @@ This provides a function to create [ExampleVertices] object that is a triangle o
 
 //a Imports
 use super::ExampleVertices;
-use crate::{BufferElementType, Mesh, Primitive, PrimitiveType, Renderable, VertexAttr};
+use crate::{
+    BufferElementType, Mesh, Primitive, PrimitiveType, Renderable, ShortIndex, VertexAttr,
+};
 
 /// Add new position, normal and indices views to an [ExampleVertices]
 /// for a tetrahedron with base at z=0 and tip at (0, 0, size)
@@ -80,8 +82,8 @@ pub fn new<R: Renderable>(eg: &mut ExampleVertices<R>, size: f32) {
 ///
 /// The object should have had the vertices for the tetrahedron (created
 /// with new() above) added to it (using a parent [ExampleVertices])
-pub fn mesh(v_id: usize, m_id: usize) -> Mesh {
-    let mut mesh = Mesh::new();
+pub fn mesh(v_id: ShortIndex, m_id: ShortIndex) -> Mesh {
+    let mut mesh = Mesh::default();
     mesh.add_primitive(Primitive::new(
         PrimitiveType::TriangleStrip,
         v_id,

@@ -1,7 +1,10 @@
 //a Imports
 use crate::hierarchy;
 use crate::Renderable;
-use crate::{Component, Instantiable, Material, Mesh, Skeleton, Transformation, Vertices};
+use crate::{
+    Component, Instantiable, Material, Mesh, ShortIndex, Skeleton, Texture, Transformation,
+    Vertices,
+};
 use hierarchy::Hierarchy;
 
 //a Object
@@ -9,16 +12,19 @@ use hierarchy::Hierarchy;
 /// A hierarchy of ObjectNode's
 ///
 /// This can be flattened in to an Instantiable
-pub struct Object<'a, R>
+pub struct Object<'object, M, R>
 where
     R: Renderable,
+    M: Material + 'object,
 {
     /// Skeleton
     pub skeleton: Option<Skeleton>,
     /// All the vertices used
-    pub vertices: Vec<&'a Vertices<'a, R>>,
+    pub vertices: Vec<&'object Vertices<'object, R>>,
+    /// All the vertices used
+    pub textures: Vec<&'object Texture<'object, R>>,
     /// All the materials used
-    pub materials: Vec<&'a dyn Material<R>>,
+    pub materials: Vec<&'object M>,
     /// The meshes etc that make up the object
     pub components: Hierarchy<Component>,
     // The roots of the bones and hierarchical recipes for traversal
@@ -28,9 +34,10 @@ where
 }
 
 //ip Display for Object
-impl<'a, R> std::fmt::Display for Object<'a, R>
+impl<'object, M, R> std::fmt::Display for Object<'object, M, R>
 where
     R: Renderable,
+    M: Material + 'object,
 {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         writeln!(fmt, "Object: {{")?;
@@ -42,8 +49,9 @@ where
 }
 
 //ip Default for Object
-impl<'a, R> Default for Object<'a, R>
+impl<'object, M, R> Default for Object<'object, M, R>
 where
+    M: Material + 'object,
     R: Renderable,
 {
     fn default() -> Self {
@@ -52,8 +60,9 @@ where
 }
 
 //ip Object
-impl<'a, R> Object<'a, R>
+impl<'object, M, R> Object<'object, M, R>
 where
+    M: Material + 'object,
     R: Renderable,
 {
     //fp new
@@ -61,11 +70,13 @@ where
     pub fn new() -> Self {
         let skeleton = None;
         let vertices = Vec::new();
+        let textures = Vec::new();
         let materials = Vec::new();
         let components = Hierarchy::new();
         Self {
             skeleton,
             vertices,
+            textures,
             materials,
             components,
         }
@@ -73,30 +84,44 @@ where
 
     //ap vertices
     /// Borrow one of the vertices
-    pub fn vertices(&self, n: usize) -> &Vertices<'a, R> {
-        self.vertices[n]
+    pub fn vertices(&self, n: ShortIndex) -> &Vertices<'object, R> {
+        self.vertices[n.as_usize()]
+    }
+
+    //ap texture
+    /// Borrow one of the textures
+    pub fn texture(&self, n: ShortIndex) -> &Texture<'object, R> {
+        self.textures[n.as_usize()]
     }
 
     //mp material
     /// Borrow a materiaal from the object
-    pub fn material(&self, n: usize) -> &dyn Material<R> {
-        self.materials[n]
+    pub fn material(&self, n: ShortIndex) -> &M {
+        self.materials[n.as_usize()]
     }
 
     //mp add_vertices
     /// Add vertices to the object
-    pub fn add_vertices(&mut self, vertices: &'a Vertices<'a, R>) -> usize {
+    pub fn add_vertices(&mut self, vertices: &'object Vertices<'object, R>) -> ShortIndex {
         let n = self.vertices.len();
         self.vertices.push(vertices);
-        n
+        n.into()
+    }
+
+    //mp add_texture
+    /// Add texture to the object
+    pub fn add_texture(&mut self, texture: &'object Texture<'object, R>) -> ShortIndex {
+        let n = self.textures.len();
+        self.textures.push(texture);
+        n.into()
     }
 
     //fp add_material
     /// Add a material to the object
-    pub fn add_material(&mut self, material: &'a dyn Material<R>) -> usize {
+    pub fn add_material(&mut self, material: &'object M) -> ShortIndex {
         let n = self.materials.len();
         self.materials.push(material);
-        n
+        n.into()
     }
 
     //fp add_component
@@ -144,11 +169,19 @@ where
         for v in &self.vertices {
             v.create_client(renderer);
         }
-        eprintln!("into_instantiable:: {self}");
-        Ok(Instantiable::new(
+        for t in &self.textures {
+            t.create_client(renderer);
+        }
+        let materials: Vec<R::Material> = self
+            .materials
+            .iter()
+            .map(|m| renderer.create_material_client(&self, m))
+            .collect();
+        Ok(Instantiable::<R>::new::<M>(
             self.skeleton,
             self.vertices,
-            self.materials,
+            self.textures,
+            materials,
             self.components,
         ))
     }

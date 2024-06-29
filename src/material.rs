@@ -1,21 +1,3 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    material.rs
-@brief   Part of 3D geometric model library
- */
-
 //a Documentation
 
 /*!
@@ -25,7 +7,7 @@ This provides for abstract Materials which can be used by any 3D model
 !*/
 
 //a Imports
-use crate::{Material, MaterialAspect, Renderable};
+use crate::{Material, MaterialAspect, ShortIndex};
 
 //a BaseData
 //tp BaseData
@@ -37,62 +19,100 @@ use crate::{Material, MaterialAspect, Renderable};
 /// and roughness 1
 ///
 /// The simplest of shaders will use just the RGB values
-#[derive(Debug)]
+///
+/// Gltf
+#[derive(Debug, Clone)]
 pub struct BaseData {
     /// Color of the material
-    pub rgba: (f32, f32, f32, f32),
+    ///
+    /// Least signficant is R, most A (0 transparent, of course)
+    pub rgba: u32,
     /// Metallic nature of the material: 0 is fully dielectric, 1.0 is fully metallic
-    pub metallic: f32,
+    ///
     /// Roughness of the material:  0.5 is specular, no specular down to 0 full reflection, up to 1 fully matt
-    pub roughness: f32,
+    ///
+    /// Each is 16 bits; least significant is metallic
+    pub metallic_roughness: u32,
+    /// The emissive color of the texture; 0 if unused
+    ///
+    /// Least signficant is R
+    pub emissive_rgb: u32,
+    /// The alpha data for the texture (alpha mode, alpha cutoff, etc)
+    ///
+    /// effectively extensions
+    pub alpha_etc: u32,
 }
 
 //ip Default for BaseData
 impl Default for BaseData {
     fn default() -> Self {
-        Self {
-            rgba: (1., 1., 1., 1.),
-            metallic: 0.,
-            roughness: 1.,
-        }
+        0xffffffff_u32.into()
     }
 }
 
 //ip BaseData
 impl BaseData {
-    //cp rgba
+    //cp of_rgba
     /// Create a new material with a given RGBA
-    pub fn rgba(rgba: (f32, f32, f32, f32)) -> Self {
-        Self {
-            rgba,
-            metallic: 0.,
-            roughness: 1.,
-        }
+    pub fn of_rgba((r, g, b, a): (u8, u8, u8, u8)) -> Self {
+        let rgba: u32 = (r as u32) | ((g as u32) << 8) | ((b as u32) << 16) | ((a as u32) << 24);
+        rgba.into()
     }
 
-    //cp set_metallic
-    /// Set the metallic nature of a material
-    pub fn set_metallic(mut self, metallic: f32) -> Self {
-        self.metallic = metallic;
-        self
+    //mp set_rgba
+    /// Set the r,g,b,a
+    pub fn set_rgba(&mut self, (r, g, b, a): (u8, u8, u8, u8)) {
+        let rgba: u32 = (r as u32) | ((g as u32) << 8) | ((b as u32) << 16) | ((a as u32) << 24);
+        self.rgba = rgba;
     }
 
-    //cp set_roughness
-    /// Set the roughness of a material
-    pub fn set_roughness(mut self, roughness: f32) -> Self {
-        self.roughness = roughness;
-        self
+    //mp set_emissive_rgb
+    /// Set the emissive r,g,b
+    pub fn set_emissive_rgb(&mut self, (r, g, b): (u8, u8, u8)) {
+        let rgb: u32 = (r as u32) | ((g as u32) << 8) | ((b as u32) << 16);
+        self.emissive_rgb = rgb
     }
 
-    //cp set_mr
+    //mp set_mr
     /// Set the metallic and roughness of a material
-    pub fn set_mr(mut self, metallic: f32, roughness: f32) -> Self {
-        self.metallic = metallic;
-        self.roughness = roughness;
-        self
+    pub fn set_mr(&mut self, metallic: f32, roughness: f32) {
+        let metallic = (metallic * 65535.0) as u32;
+        let roughness = (roughness * 65535.0) as u32;
+        self.metallic_roughness = (roughness << 16) | metallic;
+    }
+
+    //mp metallic_roughness
+    /// Get the metallic and roughness of a material
+    pub fn metallic_roughness(&self) -> (f32, f32) {
+        let metallic = self.metallic_roughness & 65535;
+        let roughness = (self.metallic_roughness >> 16) & 65535;
+        let metallic = (metallic as f32) / 65535.0;
+        let roughness = (roughness as f32) / 65535.0;
+        (metallic, roughness)
+    }
+
+    //ap rgba_tuple
+    /// Return a tuple of R, G, B, A of the color
+    pub fn rgba_tuple(&self) -> (u8, u8, u8, u8) {
+        let r = self.rgba & 0xff;
+        let g = (self.rgba >> 8) & 0xff;
+        let b = (self.rgba >> 16) & 0xff;
+        let a = (self.rgba >> 24) & 0xff;
+        (r as u8, g as u8, b as u8, a as u8)
     }
 
     //zz All done
+}
+
+impl From<u32> for BaseData {
+    fn from(rgba: u32) -> Self {
+        Self {
+            rgba,
+            metallic_roughness: 0,
+            emissive_rgb: 0,
+            alpha_etc: 0,
+        }
+    }
 }
 
 //a BaseMaterial
@@ -106,152 +126,120 @@ pub struct BaseMaterial {
 
 //ip BaseMaterial
 impl BaseMaterial {
-    //fp rgba
+    //fp of_rgba
     /// Create a new [BaseMaterial] of an RGB color and alpha
-    pub fn rgba(rgba: (f32, f32, f32, f32)) -> Self {
-        let base_data = BaseData::rgba(rgba);
+    pub fn of_rgba(rgba: u32) -> Self {
+        let base_data: BaseData = rgba.into();
         Self { base_data }
     }
-    //cp set_metallic
-    /// Set the metallicness value for the [BaseMaterial]
-    pub fn set_metallic(mut self, metallic: f32) -> Self {
-        self.base_data = self.base_data.set_metallic(metallic);
-        self
-    }
-    //cp set_roughness
-    /// Set the roughness value for the [BaseMaterial]
-    pub fn set_roughness(mut self, roughness: f32) -> Self {
-        self.base_data = self.base_data.set_roughness(roughness);
-        self
-    }
+
     //cp set_mr
     /// Set the metallicness and roughness value for the [BaseMaterial]
-    pub fn set_mr(mut self, metallic: f32, roughness: f32) -> Self {
-        self.base_data = self.base_data.set_mr(metallic, roughness);
-        self
+    pub fn set_mr(&mut self, metallic: f32, roughness: f32) {
+        self.base_data.set_mr(metallic, roughness);
     }
 }
 
 //ip Material for BaseMaterial
-impl<R: Renderable> Material<R> for BaseMaterial {
+impl Material for BaseMaterial {
     fn base_data(&self) -> &BaseData {
         &self.base_data
     }
-}
-
-//a TexturedMaterial
-//tp TexturedMaterial
-/// A simple textured material with a color and optional normal map
-#[derive(Debug)]
-pub struct TexturedMaterial<R: Renderable> {
-    base_data: BaseData,
-    base_texture: Option<R::Texture>,
-    normal_texture: Option<R::Texture>,
-}
-
-//ip Material for TexturedMaterial
-impl<R: Renderable> Material<R> for TexturedMaterial<R> {
-    //ap base_data
-    fn base_data(&self) -> &BaseData {
-        &self.base_data
-    }
-
-    //ap tetxture
-    fn texture(&self, aspect: MaterialAspect) -> Option<&R::Texture> {
-        use MaterialAspect::*;
-        #[allow(unreachable_patterns)]
-        match aspect {
-            Color => self.base_texture.as_ref(),
-            Normal => self.normal_texture.as_ref(),
-            _ => None,
-        }
-    }
-    // MetallicRoughness,
-    // Occlusion,
-    // Emission,
 }
 
 //a PbrMaterial
 //tp PbrMaterial
 /// A physically-based rendered material with full set of textures
-#[derive(Debug)]
-pub struct PbrMaterial<R: Renderable> {
+#[derive(Debug, Default)]
+pub struct PbrMaterial {
     base_data: BaseData,
-    base_texture: Option<R::Texture>,
-    normal_texture: Option<R::Texture>,
-    mr_texture: Option<R::Texture>,
-    occlusion_texture: Option<R::Texture>,
-    emission_texture: Option<R::Texture>,
-}
-
-//ip Default for PbrMaterial
-impl<R: Renderable> Default for PbrMaterial<R> {
-    fn default() -> Self {
-        Self::new()
-    }
+    base_texture: ShortIndex,
+    normal_texture: ShortIndex,
+    mr_texture: ShortIndex,
+    occlusion_texture: ShortIndex,
+    emission_texture: ShortIndex,
 }
 
 //ip PbrMaterial
-impl<R: Renderable> PbrMaterial<R> {
-    /// Create a new PBR material
-    pub fn new() -> Self {
+impl PbrMaterial {
+    //fp of_rgba
+    /// Create a new [BaseMaterial] of an RGB color and alpha
+    pub fn of_rgba(rgba: u32) -> Self {
+        let base_data: BaseData = rgba.into();
         Self {
-            base_data: BaseData::default(),
-            base_texture: None,
-            normal_texture: None,
-            mr_texture: None,
-            occlusion_texture: None,
-            emission_texture: None,
+            base_data,
+            ..Default::default()
+        }
+    }
+
+    //mp set_rgba
+    /// Set the RGBA
+    //mp set_rgba
+    /// Set the r,g,b,a
+    pub fn set_rgba(&mut self, (r, g, b, a): (u8, u8, u8, u8)) {
+        self.base_data.set_rgba((r, g, b, a));
+    }
+
+    //mp set_emissive_rgb
+    /// Set the emission RGB
+    pub fn set_emissive_rgb(&mut self, (r, g, b): (u8, u8, u8)) {
+        self.base_data.set_emissive_rgb((r, g, b));
+    }
+
+    //mp set_mr
+    /// Set the metallicness and roughness value for the [BaseMaterial]
+    pub fn set_mr(&mut self, metallic: f32, roughness: f32) {
+        self.base_data.set_mr(metallic, roughness);
+    }
+
+    //mp set_base_data
+    /// Set the base data
+    pub fn set_base_data(&mut self, base_data: &BaseData) {
+        self.base_data = base_data.clone();
+    }
+
+    //mp set_texture
+    /// Set a texture (currently just base texture) to an index in the Textures of an object
+    pub fn set_texture(&mut self, aspect: MaterialAspect, index: ShortIndex) {
+        use MaterialAspect::*;
+        #[allow(unreachable_patterns)]
+        match aspect {
+            Color => {
+                self.base_texture = index;
+            }
+            Normal => {
+                self.normal_texture = index;
+            }
+            MetallicRoughness => {
+                self.mr_texture = index;
+            }
+            Occlusion => {
+                self.occlusion_texture = index;
+            }
+            Emission => {
+                self.emission_texture = index;
+            }
+            _ => (),
         }
     }
 }
 
 //ip Material for PbrMaterial
-impl<R: Renderable> Material<R> for PbrMaterial<R> {
+impl Material for PbrMaterial {
     fn base_data(&self) -> &BaseData {
         &self.base_data
     }
 
-    fn texture(&self, aspect: MaterialAspect) -> Option<&R::Texture> {
+    fn texture(&self, aspect: MaterialAspect) -> ShortIndex {
         use MaterialAspect::*;
         #[allow(unreachable_patterns)]
         match aspect {
-            Color => self.base_texture.as_ref(),
-            Normal => self.normal_texture.as_ref(),
-            MetallicRoughness => self.mr_texture.as_ref(),
-            Occlusion => self.occlusion_texture.as_ref(),
-            Emission => self.emission_texture.as_ref(),
-            _ => None,
+            Color => self.base_texture,
+            Normal => self.normal_texture,
+            MetallicRoughness => self.mr_texture,
+            Occlusion => self.occlusion_texture,
+            Emission => self.emission_texture,
+            _ => ShortIndex::none(),
         }
     }
 }
-
-/*
-   #f gl_create
-   def gl_create(self) -> None:
-       if self.base_texture is not None:      self.base_texture.gl_create()
-       if self.mr_texture is not None:        self.mr_texture.gl_create()
-       if self.normal_texture is not None:    self.normal_texture.gl_create()
-       if self.occlusion_texture is not None: self.occlusion_texture.gl_create()
-       if self.emission_texture is not None:  self.emission_texture.gl_create()
-       pass
-   #f gl_program_configure
-   def gl_program_configure(self, program:ShaderProgram) -> None:
-       if self.base_texture is not None:
-           assert self.base_texture.texture is not None
-           GL.glActiveTexture(GL.GL_TEXTURE0)
-           GL.glBindTexture(GL.GL_TEXTURE_2D, self.base_texture.texture)
-           program.set_uniform_if("uMaterial.base_texture",
-                                  lambda u:GL.glUniform1i(u, 0) )
-           pass
-       program.set_uniform_if("uMaterial.base_color",
-                              lambda u: GL.glUniform4f(u, self.color[0], self.color[1], self.color[2], self.color[3], ) )
-       pass
-   #f __str__
-   def __str__(self) -> str:
-       r = str(self.__dict__)
-       return r
-   #f All done
-   pass
-
-*/
