@@ -98,6 +98,12 @@ impl<'texture, R: Renderable> Texture<'texture, R> {
         self.data
     }
 
+    //ap data_type
+    /// Get the data slice for the texture
+    pub fn data_type(&self) -> (u32, BufferElementType) {
+        (self.elements_per_data, self.ele_type)
+    }
+
     //mp create_client
     /// Create the client texture
     pub fn create_client(&self, renderer: &mut R) {
