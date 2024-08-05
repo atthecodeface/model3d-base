@@ -64,3 +64,27 @@ impl<T> ByteBuffer for Vec<T> {
 
     //zz All done
 }
+
+//ti ByteBuffer for &[T]
+/// Implement ByteBuffer for &[T]
+impl<T> ByteBuffer for &[T] {
+    //fp byte_length
+    fn byte_length(&self) -> usize {
+        std::mem::size_of::<T>() * self.len()
+    }
+
+    //fp borrow_bytes
+    fn borrow_bytes(&self) -> &[u8] {
+        let len = std::mem::size_of::<T>() * self.len();
+        let data = self.as_u8_ptr();
+        unsafe { std::slice::from_raw_parts(data, len) }
+    }
+
+    //fp as_u8_ptr
+    fn as_u8_ptr(&self) -> *const u8 {
+        let data: *const T = self.as_ptr();
+        unsafe { std::mem::transmute::<_, *const u8>(data) }
+    }
+
+    //zz All done
+}

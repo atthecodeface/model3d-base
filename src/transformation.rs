@@ -40,25 +40,61 @@ impl Transformation {
         Default::default()
     }
 
-    //cp set_scale
+    //cp with_scale
     /// Set the scaling of a transformation
-    pub fn set_scale(mut self, scale: Vec3) -> Self {
+    pub fn with_scale(mut self, scale: Vec3) -> Self {
         self.scale = scale;
         self
     }
 
-    //cp set_translation
+    //cp with_translation
     /// Set the translation of a transformation
-    pub fn set_translation(mut self, translation: Vec3) -> Self {
+    pub fn with_translation(mut self, translation: Vec3) -> Self {
         self.translation = translation;
         self
     }
 
-    //cp set_rotation
+    //cp with_rotation
     /// Set the rotation of a transformation
-    pub fn set_rotation(mut self, rotation: Quat) -> Self {
+    pub fn with_rotation(mut self, rotation: Quat) -> Self {
         self.rotation = rotation;
         self
+    }
+
+    //ap scale
+    /// Get the scale
+    pub fn scale(&mut self) -> Vec3 {
+        self.scale
+    }
+
+    //ap translation
+    /// Set the translation of a transformation
+    pub fn translation(&mut self) -> Vec3 {
+        self.translation
+    }
+
+    //ap rotation
+    /// Set the rotation of a transformation
+    pub fn rotation(&self) -> Quat {
+        self.rotation
+    }
+
+    //mp set_scale
+    /// Set the scaling of a transformation
+    pub fn set_scale(&mut self, scale: Vec3) {
+        self.scale = scale;
+    }
+
+    //mp set_translation
+    /// Set the translation of a transformation
+    pub fn set_translation(&mut self, translation: Vec3) {
+        self.translation = translation;
+    }
+
+    //mp set_rotation
+    /// Set the rotation of a transformation
+    pub fn set_rotation(&mut self, rotation: Quat) {
+        self.rotation = rotation;
     }
 
     //cp copy_from

@@ -1,3 +1,7 @@
+//a Imports
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 //a Basic types
 //tp Vec3
 /// 3-dimensional vector
@@ -56,6 +60,7 @@ impl BufferElementType {
 /// a renderer; a vertex always has a position attribute, but
 /// additional attributes may or maynot be provided by a model
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum VertexAttr {
     /// Indices
     Indices,
@@ -83,7 +88,7 @@ pub enum VertexAttr {
 /// Type of a primitive
 ///
 /// This is set to match the GLTF
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum PrimitiveType {
     /// Points (of an indeterminate size?)
@@ -95,6 +100,7 @@ pub enum PrimitiveType {
     /// Connected (n-1) lines (ab, bc, cd, de, ...)
     LineStrip,
     /// Individual (n/3) triangles (one for every three indices)
+    #[default]
     Triangles,
     /// Strip of (n-2) triangles (abc, bcd, cde, def, ...)
     TriangleStrip,

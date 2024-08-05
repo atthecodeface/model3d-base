@@ -1,9 +1,23 @@
 [package]
-name = "model3d-base"
-version = "0.3.0"
-edition = "2021"
+name = "mod3d-base"
+version = "0.4.0"
+edition.workspace = true
+description.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+keywords.workspace = true
+categories.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
-geo-nd         = "0.5"
-indent-display = "0.1.1"
+geo-nd.workspace = true
+indent-display.workspace = true
 
+[dependencies.serde]
+workspace = true
+optional = true
+
+[features]
+default = ["serde"]
+serde = ["dep:serde"]

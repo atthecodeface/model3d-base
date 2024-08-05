@@ -1,13 +1,13 @@
-use model3d_base::{Skeleton, Transformation};
+use mod3d_base::{Skeleton, Transformation};
 
 fn build_bone_set() -> Skeleton {
     let mut skeleton = Skeleton::new();
     let b0 = skeleton.add_bone(Transformation::new(), 0);
-    let b1 = skeleton.add_bone(Transformation::new().set_translation([1., 0., 0.]), 0);
-    let b2 = skeleton.add_bone(Transformation::new().set_translation([0., 1., 0.]), 0);
-    let b3 = skeleton.add_bone(Transformation::new().set_translation([0., 0., 1.]), 0);
-    let b21 = skeleton.add_bone(Transformation::new().set_translation([0.5, 0., 0.]), 0);
-    let b22 = skeleton.add_bone(Transformation::new().set_translation([0.0, 0., 0.5]), 0);
+    let b1 = skeleton.add_bone(Transformation::new().with_translation([1., 0., 0.]), 0);
+    let b2 = skeleton.add_bone(Transformation::new().with_translation([0., 1., 0.]), 0);
+    let b3 = skeleton.add_bone(Transformation::new().with_translation([0., 0., 1.]), 0);
+    let b21 = skeleton.add_bone(Transformation::new().with_translation([0.5, 0., 0.]), 0);
+    let b22 = skeleton.add_bone(Transformation::new().with_translation([0.0, 0., 0.5]), 0);
     skeleton.relate(b0, b1);
     skeleton.relate(b0, b2);
     skeleton.relate(b0, b3);

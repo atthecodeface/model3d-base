@@ -1,22 +1,22 @@
-use model3d_base::example_client::Renderable;
-use model3d_base::Material;
-use model3d_base::{BufferAccessor, MaterialAspect};
+use mod3d_base::example_client::Renderable;
+use mod3d_base::Material;
+use mod3d_base::{BufferAccessor, MaterialAspect};
 
 // Create an object and interrogate it
 // Create two distinct renderables
 #[test]
 fn test0() {
     // Create a triangle object with an empty skeleton
-    let mut triangle = model3d_base::ExampleVertices::new();
-    model3d_base::example_objects::triangle::new::<Renderable>(&mut triangle, 0.5);
+    let mut triangle = mod3d_base::ExampleVertices::new();
+    mod3d_base::example_objects::triangle::new::<Renderable>(&mut triangle, 0.5);
 
     // Using the set of indices/vertex data defined create primitives (a triangle)
-    let material = model3d_base::BaseMaterial::of_rgba(0xff0000ff);
-    let mut obj: model3d_base::Object<model3d_base::BaseMaterial, Renderable> =
-        model3d_base::Object::new();
+    let material = mod3d_base::BaseMaterial::of_rgba(0xff0000ff);
+    let mut obj: mod3d_base::Object<mod3d_base::BaseMaterial, Renderable> =
+        mod3d_base::Object::new();
     let v_id = obj.add_vertices(triangle.borrow_vertices(0.into()));
     let m_id = obj.add_material(&material);
-    let mesh = model3d_base::example_objects::triangle::mesh(v_id, m_id);
+    let mesh = mod3d_base::example_objects::triangle::mesh(v_id, m_id);
     obj.add_component(None, None, mesh);
     obj.analyze();
     let x = obj.vertices(v_id).borrow_client();

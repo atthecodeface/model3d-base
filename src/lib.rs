@@ -5,6 +5,8 @@
 /*!
 # TODO
 
+Replace ByteBuffer with T:AsRef<[u8]>
+
 Make Vertices have an option<indices> and update renderable vertices clients
 
 # 3D Model library
